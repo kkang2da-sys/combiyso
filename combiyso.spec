@@ -68,7 +68,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=ICON if os.path.exists(ICON) else None,
+    icon=ICON if (ICON and os.path.exists(ICON)) else None,
 )
 
 # onedir: 실행 시 임시폴더로 압축을 풀지 않아 시작이 빠르고 메모리도 덜 쓴다.
