@@ -1,0 +1,3114 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" href="/favicon.ico" />
+<title>컴비서</title>
+<style>
+  :root[data-theme="dark"] {
+    --bg:#0f1115; --panel:#171a21; --panel2:#1e222b; --panel3:#252a35; --line:#2a2f3a;
+    --text:#e7eaf0; --muted:#98a1b2; --accent:#5b8cff; --accent2:#7c5cff;
+    --user:#23324a; --ok:#33d69f; --err:#ff6b6b; --warn:#ffcc66; --code:#0b0d12;
+  }
+  :root[data-theme="light"] {
+    --bg:#f4f6fa; --panel:#ffffff; --panel2:#f0f2f7; --panel3:#e7eaf1; --line:#d8dde8;
+    --text:#161a21; --muted:#5d6675; --accent:#3d6fe0; --accent2:#6a4ce0;
+    --user:#dfe8ff; --ok:#0f9d68; --err:#d93b3b; --warn:#b07800; --code:#f6f7fb;
+  }
+  * { box-sizing:border-box; }
+  html,body { height:100%; margin:0; }
+  body { background:var(--bg); color:var(--text); display:flex;
+    font-family:"Segoe UI","Malgun Gothic",system-ui,sans-serif; font-size:14px; }
+  button, input, select, textarea { font-family:inherit; font-size:13px; background:var(--panel2);
+    color:var(--text); border:1px solid var(--line); border-radius:8px; padding:7px 10px; outline:none; }
+  button { cursor:pointer; }
+  button:hover { border-color:var(--accent); }
+  button.primary { background:linear-gradient(90deg,var(--accent),var(--accent2)); border:none;
+    color:#fff; font-weight:600; }
+  button.danger { color:var(--err); }
+  button:disabled { opacity:.5; cursor:default; }
+  ::-webkit-scrollbar { width:10px; height:10px; }
+  ::-webkit-scrollbar-thumb { background:var(--line); border-radius:6px; }
+
+  /* sidebar */
+  #side { width:282px; min-width:282px; background:var(--panel); border-right:1px solid var(--line);
+    display:flex; flex-direction:column; height:100vh; }
+  .brand { padding:13px 16px; font-weight:700; font-size:16px; border-bottom:1px solid var(--line);
+    display:flex; align-items:center; gap:8px; }
+  .brand b { color:var(--accent); }
+  .brand .v { font-size:10.5px; color:var(--muted); font-weight:400; margin-left:auto; }
+  .sideTools { padding:10px 12px 6px; display:flex; gap:8px; }
+  .sideTools button { flex:1; }
+  .sideTools button.iconOnly { flex:0 0 38px; padding:7px 0; }
+  #sessSearch { width:100%; margin:6px 12px 6px; width:calc(100% - 24px); }
+  #sessList { flex:1; overflow:auto; padding:4px 8px; }
+  .sess { padding:8px 10px; border-radius:8px; cursor:pointer; display:flex; gap:6px;
+    align-items:center; margin-bottom:2px; }
+  .sess:hover { background:var(--panel2); }
+  .sess.active { background:var(--user); }
+  .sess .t { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .sess .c { color:var(--muted); font-size:11px; }
+  .sess .x { color:var(--muted); font-size:12px; padding:0 3px; visibility:hidden; }
+  .sess:hover .x { visibility:visible; }
+  .sess .x:hover { color:var(--err); }
+  .sideFoot { border-top:1px solid var(--line); padding:8px 12px; display:flex; gap:6px; flex-wrap:wrap; }
+  .sideFoot button { flex:1; font-size:12px; padding:6px 4px; min-width:64px; }
+
+  /* main */
+  #main { flex:1; display:flex; flex-direction:column; height:100vh; min-width:0; }
+  #top { display:flex; align-items:center; gap:8px; padding:9px 16px;
+    border-bottom:1px solid var(--line); background:var(--panel); }
+  #title { flex:1; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .badge { font-size:11px; color:var(--muted); border:1px solid var(--line); padding:3px 8px;
+    border-radius:20px; white-space:nowrap; }
+  #usageWrap { width:120px; height:6px; background:var(--panel3); border-radius:4px; overflow:hidden; }
+  #usageBar { height:100%; width:0; background:linear-gradient(90deg,var(--accent),var(--accent2)); }
+  #chat { flex:1; overflow:auto; padding:22px 18px 8px; scroll-behavior:smooth; }
+  .msg { max-width:920px; margin:0 auto 18px; display:flex; gap:11px; }
+  .who { width:34px; min-width:34px; height:34px; border-radius:9px; display:flex;
+    align-items:center; justify-content:center; font-size:12px; font-weight:700; background:var(--panel2); }
+  .msg.user .who { background:var(--user); }
+  .msg.assistant .who { background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; }
+  .bubble { flex:1; min-width:0; background:var(--panel); border:1px solid var(--line);
+    border-radius:12px; padding:12px 15px; line-height:1.68; overflow-wrap:anywhere; }
+  .msg.user .bubble { background:var(--user); }
+  .bubble h1,.bubble h2,.bubble h3 { margin:14px 0 8px; font-size:15px; }
+  .bubble p { margin:8px 0; }
+  .bubble ul,.bubble ol { margin:8px 0; padding-left:22px; }
+  .bubble li { margin:3px 0; }
+  .bubble a { color:var(--accent); }
+  .bubble blockquote { margin:8px 0; padding:6px 12px; border-left:3px solid var(--accent);
+    background:var(--panel2); border-radius:0 8px 8px 0; color:var(--muted); }
+  .bubble table { border-collapse:collapse; margin:10px 0; width:100%; font-size:13px; }
+  .bubble th,.bubble td { border:1px solid var(--line); padding:6px 9px; text-align:left; }
+  .bubble th { background:var(--panel2); }
+  .bubble hr { border:none; border-top:1px solid var(--line); margin:14px 0; }
+  .bubble code { background:var(--code); padding:1px 5px; border-radius:5px;
+    font-family:Consolas,"D2Coding",monospace; font-size:12.5px; border:1px solid var(--line); }
+  .codeWrap { position:relative; margin:10px 0; }
+  .codeWrap pre { margin:0; background:var(--code); border:1px solid var(--line); border-radius:9px;
+    padding:12px; overflow:auto; }
+  .codeWrap pre code { background:none; border:none; padding:0; font-size:12.5px; line-height:1.55; }
+  .codeWrap .cp { position:absolute; top:7px; right:8px; font-size:11px; padding:3px 8px;
+    border-radius:6px; background:var(--panel2); opacity:.6; }
+  .codeWrap:hover .cp { opacity:1; }
+  .codeWrap .lang { position:absolute; top:8px; left:12px; font-size:10.5px; color:var(--muted); }
+
+  /* tool cards */
+  .tool { border:1px solid var(--line); border-radius:10px; margin:9px 0; background:var(--panel2);
+    overflow:hidden; }
+  .tool .hd { padding:8px 12px; cursor:pointer; display:flex; gap:8px; align-items:center;
+    font-size:12.5px; }
+  .tool .hd .nm { color:var(--warn); font-weight:600; }
+  .tool .hd .st { margin-left:auto; color:var(--muted); font-size:11.5px; }
+  .tool .bd { display:none; padding:2px 12px 11px; }
+  .tool.open .bd { display:block; }
+  .tool pre { max-height:380px; overflow:auto; background:var(--code); border:1px solid var(--line);
+    border-radius:8px; padding:10px; font-size:12px; white-space:pre-wrap;
+    font-family:Consolas,"D2Coding",monospace; margin:8px 0 0; }
+  .diff .add { color:var(--ok); }
+  .diff .del { color:var(--err); }
+  .diff .hunk { color:var(--accent); }
+  .subwrap { border-left:3px solid var(--accent2); padding-left:10px; margin:9px 0; }
+  .subwrap .subhd { font-size:12px; color:var(--muted); margin-bottom:4px; }
+  .todos { margin:9px 0; background:var(--panel2); border:1px solid var(--line);
+    border-radius:10px; padding:10px 12px; }
+  .todos .ti { display:flex; gap:8px; align-items:flex-start; padding:3px 0; font-size:13px; }
+  .todos .ti .m { width:16px; }
+  .todos .ti.done { color:var(--muted); text-decoration:line-through; }
+  .note { color:var(--muted); font-size:12px; margin:6px 0; }
+  .err { color:var(--err); }
+  .meta { color:var(--muted); font-size:11px; margin-top:8px; }
+
+  #bottom { border-top:1px solid var(--line); padding:11px 16px; background:var(--panel); }
+  #composer { max-width:920px; margin:0 auto; display:flex; gap:9px; align-items:flex-end; }
+  #prompt { flex:1; resize:none; min-height:46px; max-height:240px; line-height:1.5; }
+  .row { max-width:920px; margin:7px auto 0; display:flex; gap:10px; align-items:center;
+    font-size:11.5px; color:var(--muted); flex-wrap:wrap; }
+  .chip { background:var(--panel2); border:1px solid var(--line); border-radius:20px;
+    padding:3px 10px; font-size:11.5px; display:flex; gap:6px; align-items:center; }
+  .chip b { color:var(--text); font-weight:500; }
+  .chip span { cursor:pointer; color:var(--muted); }
+  .chip span:hover { color:var(--err); }
+
+  /* modal */
+  .overlay { position:fixed; inset:0; background:rgba(0,0,0,.55); display:none;
+    align-items:flex-start; justify-content:center; z-index:80; overflow:auto; }
+  .overlay.show { display:flex; }
+  .modal { background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    margin:38px 16px; width:780px; max-width:96vw; max-height:90vh; display:flex; flex-direction:column; }
+  .modal.narrow { width:560px; }
+  .modal h3 { margin:0; padding:15px 20px; border-bottom:1px solid var(--line); font-size:15px;
+    display:flex; align-items:center; gap:10px; }
+  .modal h3 .close { margin-left:auto; cursor:pointer; color:var(--muted); }
+  .modal h3 .close:hover { color:var(--err); }
+  .modal .body { padding:16px 20px; overflow:auto; }
+  .modal .foot { padding:13px 20px; border-top:1px solid var(--line); display:flex; gap:9px;
+    justify-content:flex-end; align-items:center; }
+  .modal .foot .left { margin-right:auto; }
+  .tabs { display:flex; gap:4px; padding:10px 14px 0; border-bottom:1px solid var(--line);
+    flex-wrap:wrap; }
+  .tabs button { border:none; background:none; padding:7px 11px; border-radius:8px 8px 0 0;
+    color:var(--muted); font-size:13px; }
+  .tabs button.on { background:var(--panel2); color:var(--text); font-weight:600; }
+  .field { margin-bottom:13px; }
+  .field > label { display:block; font-size:12.5px; color:var(--muted); margin-bottom:5px; }
+  .field input[type=text], .field input[type=password], .field input[type=number],
+  .field select, .field textarea { width:100%; }
+  .field textarea { min-height:80px; resize:vertical; font-family:Consolas,monospace; font-size:12.5px; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .chk { display:flex; align-items:center; gap:9px; margin-bottom:9px; }
+  .chk input { width:auto; }
+  .chk label { margin:0; color:var(--text); font-size:13px; }
+  .hint { color:var(--muted); font-size:11.5px; margin-top:4px; }
+  .sect { border-top:1px solid var(--line); margin:16px 0 12px; padding-top:13px;
+    font-weight:600; font-size:13px; }
+  .status { font-size:12.5px; margin-top:8px; }
+  .status.ok { color:var(--ok); } .status.err { color:var(--err); }
+  .listBox { max-height:320px; overflow:auto; border:1px solid var(--line); border-radius:9px; }
+  .listBox .it { padding:8px 11px; border-bottom:1px solid var(--line); display:flex;
+    gap:8px; align-items:center; font-size:12.5px; }
+  .listBox .it:hover { background:var(--panel2); }
+  .listBox .it .grow { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis;
+    white-space:nowrap; }
+  .listBox .it .sub { color:var(--muted); font-size:11px; }
+  .mcpItem { border:1px solid var(--line); border-radius:10px; padding:11px; margin-bottom:10px;
+    background:var(--panel2); }
+  .mcpItem .top { display:flex; gap:8px; align-items:center; margin-bottom:8px; }
+  .mcpItem .top input[type=text] { flex:1; }
+  .approvalModal .detail { background:var(--code); border:1px solid var(--line); border-radius:9px;
+    padding:11px; white-space:pre-wrap; font-family:Consolas,monospace; font-size:12.5px;
+    max-height:280px; overflow:auto; margin:10px 0; }
+  .approvalModal .kind { display:inline-block; font-size:11.5px; padding:3px 9px; border-radius:20px;
+    background:var(--panel3); color:var(--warn); margin-bottom:6px; }
+  .progress { height:8px; background:var(--panel3); border-radius:5px; overflow:hidden; margin:9px 0; }
+  .progress i { display:block; height:100%; width:0; background:var(--accent); }
+  .pill { font-size:10.5px; padding:2px 7px; border-radius:20px; border:1px solid var(--line);
+    color:var(--muted); }
+  .pill.on { color:var(--ok); border-color:var(--ok); }
+  .pill.off { color:var(--err); border-color:var(--err); }
+
+  /* 에이전트 선택 / 스킬 / 명령 관리 */
+  .agentPick { max-width:190px; font-size:12.5px; padding:4px 8px; border-radius:8px;
+    background:var(--panel2); border:1px solid var(--line); color:var(--text); }
+  .permTable { width:100%; border-collapse:collapse; font-size:12.5px; }
+  .permTable th { text-align:left; color:var(--muted); font-weight:500; font-size:11.5px;
+    padding:4px 6px; border-bottom:1px solid var(--line); }
+  .permTable td { padding:3px 6px; border-bottom:1px solid var(--line); }
+  .permTable select, .permTable input[type=text] { width:100%; font-size:12px; padding:4px 6px; }
+  #composerWrap { position:relative; }
+  #slashMenu { position:absolute; bottom:100%; left:0; right:0; margin-bottom:6px;
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    max-height:260px; overflow-y:auto; z-index:60; box-shadow:0 8px 28px rgba(0,0,0,.35); }
+  #slashMenu .it { padding:8px 12px; display:flex; gap:9px; align-items:baseline; cursor:pointer; }
+  #slashMenu .it:hover, #slashMenu .it.on { background:var(--panel2); }
+  #slashMenu .it b { font-size:12.5px; white-space:nowrap; }
+  #slashMenu .it .sub { color:var(--muted); font-size:11px; flex:1; overflow:hidden;
+    text-overflow:ellipsis; white-space:nowrap; }
+  #slashMenu .it .tag { font-size:10px; color:var(--muted); border:1px solid var(--line);
+    border-radius:20px; padding:1px 6px; white-space:nowrap; }
+  .kv { display:grid; grid-template-columns:96px 1fr; gap:5px 10px; font-size:12.5px;
+    align-items:center; }
+  .kv .k { color:var(--muted); }
+  /* 작업 상태 표시줄 */
+  #workBar { display:none; align-items:center; gap:8px; padding:6px 11px; margin:0 0 7px;
+    border-radius:9px; background:rgba(120,140,255,.10); border:1px solid rgba(120,140,255,.28);
+    font-size:12.5px; color:var(--muted); }
+  #workBar.on { display:flex; }
+  #workBar.warn { background:rgba(255,180,0,.12); border-color:rgba(255,180,0,.38); color:#d99a00; }
+  #workBar.dead { background:rgba(255,80,80,.12); border-color:rgba(255,80,80,.40); color:var(--err); }
+  #workBar .ph { font-weight:700; color:var(--text); }
+  #workBar .sp2 { margin-left:auto; opacity:.85; font-variant-numeric:tabular-nums; }
+  .spin { width:13px; height:13px; border-radius:50%; flex:0 0 auto;
+    border:2px solid rgba(140,150,255,.35); border-top-color:var(--accent);
+    animation:sp .8s linear infinite; }
+  @keyframes sp { to { transform:rotate(360deg); } }
+  #runDot { display:none; width:9px; height:9px; border-radius:50%; margin-right:2px;
+    background:var(--accent); box-shadow:0 0 0 0 rgba(91,140,255,.6); animation:pulse 1.4s infinite; }
+  #runDot.on { display:inline-block; }
+  @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(91,140,255,.55);} 70%{box-shadow:0 0 0 7px rgba(91,140,255,0);} 100%{box-shadow:0 0 0 0 rgba(91,140,255,0);} }
+  .sess .run { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:5px;
+    background:var(--accent); vertical-align:middle; animation:pulse 1.4s infinite; }
+  .sess .run.stop { background:var(--warn); animation:none; }
+  .resume { border:1px solid rgba(255,180,0,.45); background:rgba(255,180,0,.10);
+    border-radius:10px; padding:10px 13px; margin:10px 0; font-size:13px; }
+  .resume .rb { margin-top:8px; display:flex; gap:8px; }
+  .tool .st .el { opacity:.75; font-variant-numeric:tabular-nums; }
+
+  /* ---------- v1.5.0: 성능/자원 ---------- */
+  #memBadge { cursor:default; font-variant-numeric:tabular-nums; }
+  #memBadge.warn { color:var(--warn); border-color:var(--warn); }
+  #memBadge.dead { color:var(--err); border-color:var(--err); }
+  .sysCard { background:var(--panel2); border:1px solid var(--line); border-radius:11px;
+    padding:12px 14px; font-size:12.5px; }
+  .sysCard b { color:var(--text); }
+  .sysGrid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px 14px; }
+  .sysGrid .lab { color:var(--muted); font-size:11px; display:block; }
+  .sysGrid .val { font-weight:600; font-variant-numeric:tabular-nums; }
+  .meter { height:10px; background:var(--panel3); border-radius:6px; overflow:hidden; margin:7px 0 4px; }
+  .meter i { display:block; height:100%; width:0; background:var(--accent); transition:width .3s; }
+  .meter i.warn { background:var(--warn); }
+  .meter i.dead { background:var(--err); }
+  .liveHint { color:var(--muted); font-size:11.5px; }
+  .srvRow { display:flex; gap:6px; align-items:center; padding:7px; border:1px solid var(--line);
+    border-radius:9px; margin-bottom:6px; background:var(--panel2); }
+  .srvRow .s-name { width:130px; }
+  .srvRow .s-url { flex:1; min-width:130px; }
+  .srvRow button { white-space:nowrap; padding:5px 8px; }
+  .srvRow.active { border-color:var(--ok); box-shadow:0 0 0 1px rgba(51,214,159,.25) inset; }
+  .miniBtn { padding:4px 8px; font-size:12px; }
+  .statusBox { font-size:12.5px; color:var(--muted); white-space:pre-wrap; margin-top:8px; }
+
+  /* v1.6.0: 모델 자동 탐색 결과 */
+  .mdlGroup { border:1px solid var(--line); border-radius:10px; margin:8px 0;
+    background:var(--panel2); overflow:hidden; }
+  .mdlHead { display:flex; gap:8px; align-items:center; padding:8px 10px;
+    background:var(--panel3); font-size:12.5px; font-weight:600; }
+  .mdlHead .u { color:var(--muted); font-weight:400; font-size:11.5px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; }
+  .mdlHead button { padding:4px 8px; font-size:11.5px; white-space:nowrap; }
+  .mdlRows { max-height:210px; overflow:auto; }
+  .mdlRow { display:flex; gap:8px; align-items:center; padding:6px 10px;
+    border-top:1px solid var(--line); font-size:12.5px; }
+  .mdlRow:hover { background:var(--panel); }
+  .mdlRow .n { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    font-family:Consolas,"D2Coding",monospace; }
+  .mdlRow .m { color:var(--muted); font-size:11.5px; white-space:nowrap; }
+  .mdlRow button { padding:3px 8px; font-size:11.5px; }
+  .mdlRow.on { box-shadow:inset 0 0 0 1px var(--ok); }
+  .srvRow.api .a-key { width:150px; }
+
+  /* v1.6.1: API 키 빠른 연결 */
+  .quickBox { border:1px solid var(--line); border-radius:12px; padding:12px;
+    background:linear-gradient(180deg, var(--panel2), var(--panel)); margin-bottom:14px; }
+  .quickBox .row { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .quickBox .row > * { min-width:0; }
+  .quickBox label { margin-bottom:4px; }
+
+  /* 저사양/간소 UI — 애니메이션·그림자·블러를 꺼 CPU/GPU 부담을 줄인다 */
+  body.lite * { animation:none !important; transition:none !important;
+    text-shadow:none !important; }
+  body.lite #chat { scroll-behavior:auto; }
+  body.lite .overlay { backdrop-filter:none; }
+  body.lite .modal, body.lite #slashMenu, body.lite .tool, body.lite .resume {
+    box-shadow:none; }
+  body.lite .msg .bubble, body.lite .tool, body.lite .sysCard { border-radius:7px; }
+  body.lite .spin { animation:none; border-top-color:var(--accent); opacity:.7; }
+  body.lite #runDot, body.lite .sess .run { animation:none; box-shadow:none; }
+  body.lite .sess { padding-top:5px; padding-bottom:5px; }
+</style>
+</head>
+<body>
+
+<div id="side">
+  <div class="brand">컴<b>비서</b> <span class="v" id="verBadge">v-</span></div>
+  <div class="sideTools">
+    <button class="primary" id="newBtn">+ 새 대화</button>
+    <button class="iconOnly" id="setBtn" title="설정">⚙</button>
+  </div>
+  <input type="text" id="sessSearch" placeholder="대화 검색…" />
+  <div id="sessList"></div>
+  <div class="sideFoot">
+    <button id="backupBtn" title="파일 백업/되돌리기">🗂 백업</button>
+    <button id="toolsBtn" title="사용 가능한 도구">🧩 도구</button>
+    <button id="importBtn" title="대화 가져오기">📥 가져오기</button>
+    <button id="themeBtn" title="밝게/어둡게">🌓 테마</button>
+  </div>
+</div>
+
+<div id="main">
+  <div id="top">
+    <div id="title">새 대화</div>
+    <span id="runDot" title="작업 진행 중"></span>
+    <select id="agentPick" class="agentPick" title="에이전트 선택"></select>
+    <div id="usageWrap" title="컨텍스트 사용량"><div id="usageBar"></div></div>
+    <div class="badge" id="modelBadge">-</div>
+    <div class="badge" id="memBadge" title="시스템 메모리 여유">RAM -</div>
+    <button id="renameBtn" title="이름 변경">✎</button>
+    <button id="exportBtn" title="내보내기">⬇</button>
+  </div>
+  <div id="chat"></div>
+  <div id="bottom">
+    <div id="workBar"><span class="spin"></span><span class="ph">작업 중</span><span class="dt"></span><span class="sp2"></span></div>
+    <div id="attachRow" class="row" style="display:none"></div>
+    <div id="composerWrap">
+      <div id="slashMenu" style="display:none"></div>
+      <div id="composer">
+        <button id="attachBtn" title="파일 첨부 (이미지 · PDF · 텍스트)" style="height:46px">📎</button>
+        <textarea id="prompt" placeholder="무엇을 도와드릴까요?  (Enter 전송 · Shift+Enter 줄바꿈 · / 명령어)"></textarea>
+        <button class="primary" id="sendBtn" style="height:46px;padding:0 20px">전송</button>
+        <button id="stopBtn" style="height:46px;display:none">중지</button>
+      </div>
+    </div>
+    <div class="row"><span id="hint">작업 폴더: -</span><span id="usageText"></span></div>
+    <input type="file" id="fileInput" multiple accept="image/*,.pdf,.txt,.md,.py,.js,.json,.csv,.log,.html,.css,.xml,.yaml,.yml,.ini,.toml,.sh,.bat,.ps1" style="display:none" />
+    <input type="file" id="importInput" accept=".json" style="display:none" />
+  </div>
+</div>
+
+<!-- 승인 -->
+<div class="overlay approvalModal" id="apOverlay">
+  <div class="modal narrow">
+    <h3>🔐 승인이 필요합니다</h3>
+    <div class="body">
+      <div class="kind" id="apKind">-</div>
+      <div id="apTitle" style="font-weight:600;margin-bottom:6px"></div>
+      <div class="hint">아래 작업을 실행하려고 합니다. 내용을 확인하세요.</div>
+      <div class="detail" id="apDetail"></div>
+    </div>
+    <div class="foot">
+      <button class="danger" id="apDeny">거부</button>
+      <button id="apOnce">이번만 허용</button>
+      <button class="primary" id="apAlways">이 세션 동안 허용</button>
+    </div>
+  </div>
+</div>
+
+<!-- 설정 -->
+<div class="overlay" id="setOverlay">
+  <div class="modal">
+    <h3>⚙ 설정 <span class="close" data-close="setOverlay">✕</span></h3>
+    <div class="tabs" id="setTabs">
+      <button data-tab="model" class="on">모델</button>
+      <button data-tab="perf">성능</button>
+      <button data-tab="perm">권한</button>
+      <button data-tab="agents">에이전트</button>
+      <button data-tab="skills">스킬</button>
+      <button data-tab="cmds">명령</button>
+      <button data-tab="mcp">MCP</button>
+      <button data-tab="rules">규칙 파일</button>
+      <button data-tab="agent">동작</button>
+      <button data-tab="info">정보</button>
+    </div>
+    <div class="body">
+      <!-- 모델 -->
+      <div class="tabpane" id="tab-model">
+        <div class="field">
+          <label>모델 연결 방식</label>
+          <select id="provider">
+            <option value="ollama">Ollama — 이 PC / 내부 네트워크</option>
+            <option value="openai">API 키 — Gemini · OpenAI · Groq 등</option>
+          </select>
+        </div>
+
+        <div class="quickBox">
+          <div class="field" style="margin-bottom:4px">
+            <label>⚡ 빠른 연결 — API 키만 붙여넣으면 끝</label>
+            <div class="row">
+              <select id="quickService" style="flex:1;min-width:170px"></select>
+              <input type="password" id="quickKey" placeholder="API 키 붙여넣기 (서비스 자동 감지)"
+                style="flex:1.4;min-width:200px">
+              <button id="quickBtn" class="primary miniBtn">연결</button>
+            </div>
+          </div>
+          <div id="quickPick" style="display:none;align-items:center;gap:8px;margin-top:8px">
+            <label style="margin:0;white-space:nowrap">모델</label>
+            <select id="quickModel" style="flex:1"></select>
+            <button id="quickApply" class="miniBtn">적용</button>
+          </div>
+          <div class="statusBox" id="quickStatus"></div>
+        </div>
+
+        <div id="ollamaBox">
+          <div class="field"><label>Ollama 주소</label><input type="text" id="ollama_url"></div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 4px">
+            <button id="btnLocalScan" class="miniBtn primary">🖥 이 PC 검색</button>
+            <button id="btnLanScan" class="miniBtn">📡 내부 네트워크 검색</button>
+            <button id="btnAddrProbe" class="miniBtn">🔎 주소 확인</button>
+            <input type="number" id="lan_scan_subnets" min="1" max="8" value="3"
+              style="width:62px" title="검색할 /24 대역 수">
+          </div>
+          <div class="statusBox" id="llmStatus"></div>
+          <div id="modelPick"></div>
+          <div class="field" style="margin-top:10px">
+            <label>모델</label>
+            <div style="display:flex;gap:8px">
+              <input type="text" id="ollama_model" list="modelList">
+              <button id="loadModelsBtn" style="white-space:nowrap">목록</button>
+              <button id="ollamaBtn" style="white-space:nowrap">Ollama 관리</button>
+            </div>
+            <datalist id="modelList"></datalist>
+          </div>
+          <div class="chk"><input type="checkbox" id="auto_start_ollama">
+            <label for="auto_start_ollama">이 PC의 Ollama가 꺼져 있으면 자동으로 켜기</label></div>
+          <div class="sect">모델 서버 (다른 PC의 Ollama)</div>
+          <div class="hint">같은 네트워크에 있는 다른 PC의 Ollama 를 그대로 붙여 쓸 수 있습니다.
+            그 PC에서 <code>OLLAMA_HOST=0.0.0.0</code> 으로 Ollama 를 실행하고 11434 포트를 방화벽에서 허용하세요.</div>
+          <div id="srvList"></div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <input type="text" id="srvName" placeholder="이름 (예: 거실 PC)" style="width:140px">
+            <input type="text" id="srvUrl" placeholder="192.168.0.10:11434" style="flex:1;min-width:150px">
+            <button id="srvAdd" class="miniBtn">+ 서버 추가</button>
+            <button id="srvLocal" class="miniBtn" title="이 PC의 Ollama 사용">이 PC</button>
+          </div>
+          <div class="statusBox" id="srvStatus"></div>
+          <div class="hint" id="netHint"></div>
+          <div class="field" style="margin-top:10px"><label>Ollama API 키 (프록시 사용 시 · 선택)</label>
+            <input type="password" id="ollama_api_key" placeholder="비워두면 사용 안 함"></div>
+        </div>
+        <div id="openaiBox">
+          <div class="field"><label>API 서비스 추가</label>
+            <div style="display:flex;gap:6px">
+              <select id="apiPresetSel" style="flex:1"></select>
+              <button id="apiPresetAdd" class="miniBtn">+ 추가</button>
+            </div>
+          </div>
+          <div id="apiList"></div>
+          <div class="field"><label>Base URL</label><input type="text" id="openai_base_url"></div>
+          <div class="field"><label>API 키</label>
+            <input type="password" id="openai_api_key" placeholder="sk-... / AIza..."></div>
+          <div class="field"><label>모델</label>
+            <div style="display:flex;gap:8px">
+              <input type="text" id="openai_model" list="apiModelList">
+              <button id="btnApiModels" class="miniBtn" style="white-space:nowrap">모델 검색</button>
+            </div>
+            <datalist id="apiModelList"></datalist>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button id="btnApiTest" class="miniBtn">연결 테스트</button>
+            <button id="btnApiKeys" class="miniBtn">키 발급 페이지</button>
+          </div>
+          <div class="statusBox" id="apiStatus"></div>
+          <div class="hint">Gemini · OpenAI · OpenRouter · Groq · Together · DeepSeek · xAI ·
+            Mistral · Cerebras · Fireworks · Anthropic · LM Studio · vLLM —
+            <code>/chat/completions</code> 호환이면 모두 사용 가능합니다.</div>
+        </div>
+        <div class="field"><label>temperature (0=정확, 1=창의)</label><input type="number" id="temperature" step="0.05" min="0" max="2"></div>
+      </div>
+      <!-- 성능 -->
+      <div class="tabpane" id="tab-perf" style="display:none">
+        <div class="sect" style="border-top:none;margin-top:0">내 PC 자동 감지</div>
+        <div class="sysCard">
+          <div class="sysGrid">
+            <div><span class="lab">등급</span><span class="val" id="pfTier">-</span></div>
+            <div><span class="lab">CPU</span><span class="val" id="pfCpu">-</span></div>
+            <div><span class="lab">메모리</span><span class="val" id="pfMem">-</span></div>
+            <div><span class="lab">그래픽 (VRAM)</span><span class="val" id="pfGpu">-</span></div>
+          </div>
+          <div class="meter" title="시스템 메모리 사용률"><i id="pfMemBar"></i></div>
+          <div class="liveHint" id="pfLive">-</div>
+          <div class="liveHint" id="pfApplied" style="margin-top:6px"></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">
+          <button id="cleanupBtn" class="primary">🧹 지금 자원 회복</button>
+          <button id="unloadBtn">🦙 모델 내리기</button>
+          <button id="perfRefreshBtn">🔄 새로고침</button>
+        </div>
+        <div class="statusBox" id="cleanupStatus"></div>
+        <div class="sect">자동 최적화</div>
+        <div class="grid2">
+          <div class="field"><label>저사양 모드</label>
+            <select id="low_spec">
+              <option value="auto">자동 (하드웨어에 맞춤)</option>
+              <option value="on">켜기 — 자원 절약</option>
+              <option value="off">끄기 — 최대 성능</option>
+            </select>
+          </div>
+          <div class="field"><label>자동 최적화</label>
+            <select id="auto_optimize">
+              <option value="true">켜기 — 감지된 사양에 맞춤</option>
+              <option value="false">끄기 — 설정값 그대로</option>
+            </select>
+          </div>
+        </div>
+        <div class="chk"><input type="checkbox" id="memory_guard"><label for="memory_guard">메모리가 부족하면 출력·컨텍스트를 자동으로 줄이기</label></div>
+        <div class="grid2">
+          <div class="field"><label>Ollama 컨텍스트 (num_ctx, 0=기본)</label><input type="number" id="ollama_num_ctx" min="0" step="1024"></div>
+          <div class="field"><label>최대 생성 토큰 (0=제한 없음)</label><input type="number" id="ollama_num_predict" min="0"></div>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>모델 메모리 유지 (keep_alive)</label><input type="text" id="ollama_keep_alive" placeholder="30m"></div>
+          <div class="field"><label>원격 연결 타임아웃(초)</label><input type="number" id="ollama_connect_timeout" min="2" max="120"></div>
+        </div>
+        <div class="field"><label>추론(생각) 단계 — qwen3·r1 등</label>
+          <select id="ollama_think">
+            <option value="auto">자동 — 모델 기본값</option>
+            <option value="off">끄기 — 빠름 (작은 모델·에이전트 권장)</option>
+            <option value="on">켜기 — 더 깊게 생각 (느림)</option>
+          </select>
+        </div>
+        <div class="hint" id="perfHint"></div>
+        <div class="sect">종료 시 자원 회복</div>
+        <div class="grid2">
+          <div class="field"><label>모델 언로드</label>
+            <select id="release_on_exit">
+              <option value="auto">자동 — 사용 중인 서버의 모델 내리기</option>
+              <option value="on">켜기 — 원격 서버 모델까지 내리기</option>
+              <option value="off">끄기 — 모델 유지(다음 실행 빠름)</option>
+            </select>
+          </div>
+          <div class="field"><label>UI 간소 모드</label>
+            <select id="ui_lite">
+              <option value="auto">자동 (저사양이면 켜짐)</option>
+              <option value="on">켜기 — 애니메이션 끔</option>
+              <option value="off">끄기</option>
+            </select>
+          </div>
+        </div>
+        <div class="chk"><input type="checkbox" id="cleanup_on_exit"><label for="cleanup_on_exit">종료 시 메모리 캐시 정리 + 작업 세트 반납</label></div>
+        <div class="hint">프로그램을 닫으면(창 닫기 포함) Ollama 모델을 <b>메모리/VRAM에서 내려</b> 다른 프로그램이 쓸 수 있게 합니다. 다음 실행 때 모델을 다시 올리므로 첫 응답이 조금 느릴 수 있습니다.</div>
+        <div class="sect">하위 에이전트 (병렬)</div>
+        <div class="grid2">
+          <div class="field"><label>병렬 실행</label>
+            <select id="subagent_parallel">
+              <option value="auto">자동 (저사양이면 순차)</option>
+              <option value="on">켜기 — 읽기 전용 작업 동시 실행</option>
+              <option value="off">끄기 — 항상 순차</option>
+            </select>
+          </div>
+          <div class="field"><label>동시 실행 최대 개수</label><input type="number" id="subagent_parallel_max" min="2" max="8"></div>
+        </div>
+        <div class="hint">파일을 쓰지 않는 조사·탐색 작업만 병렬로 돌립니다(파일 충돌 방지). 동시에 돌리면 LLM 호출이 늘어 메모리를 더 씁니다.</div>
+      </div>
+      <!-- 권한 -->
+      <div class="tabpane" id="tab-perm" style="display:none">
+        <div class="field"><label>워크스페이스 (에이전트가 접근할 기본 폴더)</label>
+          <div style="display:flex;gap:8px">
+            <input type="text" id="workspace"><button id="browseBtn" style="white-space:nowrap">찾아보기</button>
+          </div>
+        </div>
+        <div class="sect">빠른 설정</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button data-preset="ask">🛡 위험한 작업은 물어보기 (권장)</button>
+          <button data-preset="auto">⚡ 전부 자동 허용</button>
+          <button data-preset="readonly">🔒 읽기 전용</button>
+        </div>
+        <div class="sect">종류별 기본 동작</div>
+        <div id="permKinds"></div>
+        <div class="sect">세밀 규칙 <span style="font-weight:400;color:var(--muted)">(위에서부터 먼저 적용)</span></div>
+        <div class="hint">도구/종류 + 패턴(와일드카드 <code>*</code>) + 동작. 예:
+          <code>run_command</code>/<code>git push*</code>/물어보기,
+          <code>read_file</code>/<code>*.env</code>/차단</div>
+        <div id="permRules" style="margin:10px 0"></div>
+        <button id="permAddRule">+ 규칙 추가</button>
+        <div class="sect">기타</div>
+        <div class="chk"><input type="checkbox" id="allow_outside_workspace"><label for="allow_outside_workspace">워크스페이스 밖 접근 허용 (⚠ 주의)</label></div>
+        <div class="chk"><input type="checkbox" id="auto_backup"><label for="auto_backup">수정 전 자동 백업 (되돌리기 가능)</label></div>
+        <div class="grid2">
+          <div class="field"><label>명령 제한시간(초)</label><input type="number" id="command_timeout" min="5"></div>
+          <div class="field"><label>백업 보관 개수</label><input type="number" id="backup_keep" min="10"></div>
+        </div>
+      </div>
+      <!-- 에이전트 -->
+      <div class="tabpane" id="tab-agent" style="display:none">
+        <div class="sect">되돌리기 (git 체크포인트)</div>
+        <div class="field">
+          <label>자동 되돌리기 지점</label>
+          <select id="git_undo">
+            <option value="auto">자동 (git 이 있으면 켬)</option>
+            <option value="on">켜기</option>
+            <option value="off">끄기 — 파일 백업만 사용</option>
+          </select>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>최대 파일 수 (넘으면 생략)</label><input type="number" id="git_undo_max_files" min="100"></div>
+          <div class="field"><label>최대 용량 MB (넘으면 생략)</label><input type="number" id="git_undo_max_mb" min="10"></div>
+        </div>
+        <div class="hint">작업 폴더에 <code>.git</code> 을 만들지 않고 컴비서 데이터 폴더에만 스냅샷을 저장합니다. 🗂 백업 버튼에서 지점 목록을 보고 되돌릴 수 있습니다.</div>
+        <div class="sect">첨부 (이미지 · PDF)</div>
+        <div class="chk"><input type="checkbox" id="attachments_enabled"><label for="attachments_enabled">이미지/PDF 첨부 사용</label></div>
+        <div class="grid2">
+          <div class="field"><label>이미지 최대 변(px, 자동 축소)</label><input type="number" id="image_max_side" min="256" max="4096"></div>
+          <div class="field"><label>첨부 최대 용량 (MB)</label><input type="number" id="attach_max_upload_mb" min="1" max="128"></div>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>이미지를 보낼 최근 대화 수</label><input type="number" id="image_history_turns" min="1" max="5"></div>
+          <div class="field"><label>PDF 최대 페이지</label><input type="number" id="pdf_max_pages" min="1" max="500"></div>
+        </div>
+        <div class="hint">이미지는 올릴 때 자동으로 줄여 전송합니다. 그림을 이해하려면 <b>비전 지원 모델</b>(예: llava, qwen2.5vl, llama3.2-vision, gpt-4o)이 필요합니다. PDF 는 텍스트를 추출해 넣습니다(스캔본은 이미지로 첨부).</div>
+        <div class="sect">에이전트 동작</div>
+        <div class="grid2">
+          <div class="field"><label>최대 도구 단계</label><input type="number" id="max_steps" min="1" max="200"></div>
+          <div class="field"><label>하위 에이전트 최대 단계</label><input type="number" id="subagent_max_steps" min="1" max="100"></div>
+        </div>
+        <div class="field">
+          <label>도구 호출 방식</label>
+          <select id="tool_mode">
+            <option value="auto">자동 (API=네이티브, 로컬=텍스트)</option>
+            <option value="native">네이티브 함수호출</option>
+            <option value="text">텍스트 프로토콜 (모델 무관)</option>
+          </select>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>도구 출력 최대 글자수</label><input type="number" id="max_tool_output" min="1000"></div>
+          <div class="field"><label>압축 후 최근 메시지 유지</label><input type="number" id="keep_recent_messages" min="2"></div>
+        </div>
+        <div class="chk"><input type="checkbox" id="auto_compact"><label for="auto_compact">컨텍스트 자동 압축 (긴 대화 요약)</label></div>
+        <div class="field"><label>압축 기준(추정 토큰)</label><input type="number" id="compact_threshold" min="2000"></div>
+        <div class="field"><label>추가 시스템 지시 (선택)</label>
+          <textarea id="system_extra" placeholder="예: 항상 존댓말로, 코드는 파이썬으로"></textarea></div>
+        <div class="field"><label>task 도구 기본 하위 에이전트</label>
+          <select id="subagent_type"></select></div>
+      </div>
+      <!-- 스킬 -->
+      <div class="tabpane" id="tab-skills" style="display:none">
+        <div class="chk"><input type="checkbox" id="skills_enabled"><label for="skills_enabled">스킬 기능 사용 (에이전트가 필요할 때 스킬 지침을 불러옵니다)</label></div>
+        <div class="hint" id="skillsDir">폴더: -</div>
+        <div style="display:flex;gap:8px;margin:10px 0">
+          <button class="primary" id="skillNew">+ 새 스킬</button>
+          <button id="skillReload">🔄 새로고침</button>
+        </div>
+        <div id="skillsList" class="listBox" style="max-height:360px"></div>
+      </div>
+      <!-- 명령 -->
+      <div class="tabpane" id="tab-cmds" style="display:none">
+        <div class="chk"><input type="checkbox" id="commands_enabled"><label for="commands_enabled">입력창에서 /명령어 사용</label></div>
+        <div class="hint">명령 본문에서 <code>$ARGUMENTS</code> 는 전체 인자, <code>$1 $2</code> 는 개별 인자로 바뀝니다.</div>
+        <div style="display:flex;gap:8px;margin:10px 0">
+          <button class="primary" id="cmdNew">+ 새 명령</button>
+          <button id="cmdReload">🔄 새로고침</button>
+        </div>
+        <div id="cmdsList" class="listBox" style="max-height:360px"></div>
+      </div>
+      <!-- 에이전트 정의 -->
+      <div class="tabpane" id="tab-agents" style="display:none">
+        <div class="hint">에이전트마다 성격(시스템 프롬프트)과 사용할 도구를 정할 수 있습니다.
+          상단 드롭다운에서 현재 에이전트를 바꿉니다.</div>
+        <div style="display:flex;gap:8px;margin:10px 0">
+          <button class="primary" id="agentNew">+ 새 에이전트</button>
+          <button id="agentReload">🔄 새로고침</button>
+        </div>
+        <div id="agentsList" class="listBox" style="max-height:380px"></div>
+      </div>
+      <!-- MCP -->
+      <div class="tabpane" id="tab-mcp" style="display:none">
+        <div class="hint">MCP(Model Context Protocol) 서버를 등록하면 그 도구들이 에이전트에 추가됩니다.
+          예: <code>npx -y @modelcontextprotocol/server-filesystem C:\work</code></div>
+        <div id="mcpEditor" style="margin:12px 0"></div>
+        <button id="mcpAdd">+ MCP 서버 추가</button>
+        <div class="sect">서버 상태</div>
+        <div id="mcpStatus" class="listBox"><div class="it">아직 확인 안 함</div></div>
+        <button id="mcpReload" style="margin-top:10px">🔄 다시 연결</button>
+      </div>
+      <!-- 규칙 -->
+      <div class="tabpane" id="tab-rules" style="display:none">
+        <div class="chk"><input type="checkbox" id="use_rules_file"><label for="use_rules_file">작업 폴더의 규칙 파일을 시스템 프롬프트에 포함</label></div>
+        <div class="field"><label>규칙 파일 이름</label><input type="text" id="rules_file"></div>
+        <div class="hint" id="rulesPath">경로: -</div>
+        <div class="field"><label>규칙 내용 (에이전트가 항상 따름)</label>
+          <textarea id="rulesContent" style="min-height:220px"
+            placeholder="# 작업 규칙&#10;- 항상 한국어로 답한다&#10;- 새 파일은 docs/ 폴더에 만든다"></textarea></div>
+        <button id="rulesSave">규칙 저장</button>
+        <span class="status" id="rulesStatus"></span>
+      </div>
+      <!-- 정보 -->
+      <div class="tabpane" id="tab-info" style="display:none">
+        <div class="field"><label>버전</label><div id="infoVer">-</div></div>
+        <div class="field"><label>데이터 폴더</label><div id="infoData" style="word-break:break-all">-</div></div>
+        <div class="field"><label>설정 파일</label><div id="infoCfg" style="word-break:break-all">-</div></div>
+        <div class="chk"><input type="checkbox" id="show_usage"><label for="show_usage">상단에 컨텍스트 사용량 표시</label></div>
+        <div class="sect">초기화</div>
+        <button class="danger" id="resetBtn">설정 초기화</button>
+        <div class="hint">설정만 초기화되고 대화 기록은 그대로 남습니다.</div>
+        <div class="sect">데이터</div>
+        <button class="danger" id="delAllSessions">모든 대화 삭제</button>
+      </div>
+    </div>
+    <div class="foot">
+      <span class="left status" id="testStatus"></span>
+      <button id="testBtn">연결 테스트</button>
+      <button class="primary" id="saveBtn">저장</button>
+      <button data-close="setOverlay">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 폴더 선택 -->
+<div class="overlay" id="fsOverlay">
+  <div class="modal narrow">
+    <h3>📁 폴더 선택 <span class="close" data-close="fsOverlay">✕</span></h3>
+    <div class="body">
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <input type="text" id="fsPath" style="flex:1"><button id="fsGo">이동</button>
+      </div>
+      <div id="fsList" class="listBox" style="max-height:340px"></div>
+    </div>
+    <div class="foot">
+      <button class="primary" id="fsPick">이 폴더 선택</button>
+      <button data-close="fsOverlay">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 백업 / 체크포인트 -->
+<div class="overlay" id="backupOverlay">
+  <div class="modal">
+    <h3>🗂 백업 · ⏱ 되돌리기 <span class="close" data-close="backupOverlay">✕</span></h3>
+    <div class="body">
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <button id="ckptMake" style="flex:1">⏱ 지금 지점 저장</button>
+        <button id="ckptClear" class="danger">체크포인트 전체 삭제</button>
+      </div>
+      <div id="ckptStatus" class="hint"></div>
+      <div id="ckptList" class="listBox" style="margin-top:6px;max-height:240px"></div>
+      <div class="hint" style="margin-top:14px">에이전트가 파일을 수정/삭제하기 전에 저장해 둔 원본입니다. 마음에 안 들면 되돌리세요.</div>
+      <div id="backupList" class="listBox" style="margin-top:10px;max-height:240px"></div>
+    </div>
+    <div class="foot">
+      <button class="danger left" id="backupClear">백업 전체 삭제</button>
+      <button data-close="backupOverlay">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 도구 -->
+<div class="overlay" id="toolsOverlay">
+  <div class="modal">
+    <h3>🧩 사용 가능한 도구 <span class="close" data-close="toolsOverlay">✕</span></h3>
+    <div class="body"><div id="toolsList" class="listBox" style="max-height:460px"></div></div>
+    <div class="foot"><button data-close="toolsOverlay">닫기</button></div>
+  </div>
+</div>
+
+<!-- Ollama -->
+<div class="overlay" id="ollamaOverlay">
+  <div class="modal narrow">
+    <h3>🦙 Ollama 모델 관리 <span class="close" data-close="ollamaOverlay">✕</span></h3>
+    <div class="body">
+      <div class="field"><label>모델 다운로드</label>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="pullName" placeholder="예: llama3.2:3b, qwen2.5:7b">
+          <button class="primary" id="pullBtn" style="white-space:nowrap">다운로드</button>
+        </div>
+      </div>
+      <div class="progress"><i id="pullBar"></i></div>
+      <div class="hint" id="pullStatus">준비됨</div>
+      <div class="sect">설치된 모델</div>
+      <div id="ollamaList" class="listBox" style="max-height:300px"></div>
+    </div>
+    <div class="foot"><button data-close="ollamaOverlay">닫기</button></div>
+  </div>
+</div>
+
+<!-- 스킬 편집 -->
+<div class="overlay" id="skillOverlay">
+  <div class="modal">
+    <h3>📚 스킬 <span class="close" data-close="skillOverlay">✕</span></h3>
+    <div class="body">
+      <div class="grid2">
+        <div class="field"><label>id (도구 호출·/명령에 사용, 공백 없이)</label>
+          <input type="text" id="sk_id" placeholder="report-generator"></div>
+        <div class="field"><label>이름</label>
+          <input type="text" id="sk_name" placeholder="보고서 만들기"></div>
+      </div>
+      <div class="field"><label>설명 (에이전트가 언제 쓸지 판단하는 정보)</label>
+        <input type="text" id="sk_desc" placeholder="작업 폴더를 조사해 한국어 보고서를 만들 때 사용"></div>
+      <div class="field"><label>지침 본문 (SKILL.md 본문)</label>
+        <textarea id="sk_body" style="min-height:260px" placeholder="## 절차&#10;1. list_dir 로 구조 파악&#10;2. ..."></textarea></div>
+      <div class="hint" id="sk_res">참고 파일: -</div>
+      <div class="status" id="sk_status"></div>
+    </div>
+    <div class="foot">
+      <button class="danger left" id="sk_del">삭제</button>
+      <button data-close="skillOverlay">닫기</button>
+      <button class="primary" id="sk_save">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 에이전트 편집 -->
+<div class="overlay" id="agentEditOverlay">
+  <div class="modal">
+    <h3>🤖 에이전트 편집 <span class="close" data-close="agentEditOverlay">✕</span></h3>
+    <div class="body">
+      <div class="grid2">
+        <div class="field"><label>id</label><input type="text" id="ag_id"></div>
+        <div class="field"><label>종류</label>
+          <select id="ag_mode">
+            <option value="primary">primary — 상단에서 선택해 대화</option>
+            <option value="subagent">subagent — task 도구 전용</option>
+            <option value="all">all — 둘 다</option>
+          </select></div>
+      </div>
+      <div class="field"><label>설명</label><input type="text" id="ag_desc"></div>
+      <div class="field"><label>사용할 도구</label>
+        <div id="ag_tools" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:4px"></div>
+        <div class="chk" style="margin-top:8px"><input type="checkbox" id="ag_all">
+          <label for="ag_all">모든 도구 사용</label></div>
+      </div>
+      <div class="field"><label>시스템 프롬프트 (이 에이전트의 성격·규칙)</label>
+        <textarea id="ag_body" style="min-height:200px"></textarea></div>
+      <div class="field"><label>temperature (비우면 전역 설정 사용)</label>
+        <input type="text" id="ag_temp" placeholder="0.2"></div>
+      <div class="status" id="ag_status"></div>
+    </div>
+    <div class="foot">
+      <button class="danger left" id="ag_del">삭제</button>
+      <button data-close="agentEditOverlay">닫기</button>
+      <button class="primary" id="ag_save">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 명령 편집 -->
+<div class="overlay" id="cmdOverlay">
+  <div class="modal">
+    <h3>⌨️ 명령 편집 <span class="close" data-close="cmdOverlay">✕</span></h3>
+    <div class="body">
+      <div class="grid2">
+        <div class="field"><label>명령 이름 (슬래시 뒤)</label>
+          <input type="text" id="cm_id" placeholder="review"></div>
+        <div class="field"><label>설명</label>
+          <input type="text" id="cm_desc" placeholder="코드 리뷰를 요청합니다"></div>
+      </div>
+      <div class="field"><label>본문 ($ARGUMENTS, $1 $2 사용 가능)</label>
+        <textarea id="cm_body" style="min-height:240px"
+          placeholder="다음 파일을 리뷰해줘: $1&#10;추가 지시: $ARGUMENTS"></textarea></div>
+      <div class="status" id="cm_status"></div>
+    </div>
+    <div class="foot">
+      <button class="danger left" id="cm_del">삭제</button>
+      <button data-close="cmdOverlay">닫기</button>
+      <button class="primary" id="cm_save">저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const chatEl = $("chat");
+
+const state = {
+  config: {}, sessions: [], currentId: null, controller: null,
+  bubble: null, streamed: "", attachments: [], todos: [],
+  apQueue: [], apCurrent: null, autoScroll: true, subCards: {}, toolSeq: 0,
+  meta: {}, agents: [], skills: [], commands: [], slashItems: [],
+  slashIdx: -1, slashOpen: false, slashMatches: [], allTools: [],
+  editingSkill: null, editingAgent: null, editingCmd: null,
+  running: false, runId: null, runStart: 0, lastEventAt: 0, doneOk: false, freeMb: null,
+  pressure: 0, bulkLoad: false, sys: {}, resTimer: null, resBusy: false,
+  presets: [], apiActive: ""
+};
+
+/* 내부 전용 키(_로 시작)는 저장하지 않는다 */
+function cleanCfg(c) {
+  const out = {};
+  Object.keys(c || {}).forEach(k => { if (k[0] !== "_") out[k] = c[k]; });
+  return out;
+}
+
+/* ============================ 유틸 ============================ */
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g,
+    c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function fmtTime(t) {
+  if (!t) return "";
+  const d = new Date(t * 1000);
+  return d.toLocaleString("ko-KR", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
+}
+function fmtSize(n) {
+  if (!n) return "";
+  const u = ["B", "KB", "MB", "GB"]; let i = 0;
+  while (n >= 1024 && i < 3) { n /= 1024; i++; }
+  return (i ? n.toFixed(1) : n) + u[i];
+}
+async function api(path, opts) {
+  const r = await fetch(path, opts);
+  if (!r.ok) throw new Error((await r.text()) || ("HTTP " + r.status));
+  const ct = r.headers.get("content-type") || "";
+  return ct.includes("json") ? r.json() : r.text();
+}
+function post(path, body) {
+  return api(path, { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body || {}) });
+}
+
+/* ---------- v1.5.0: 자원 표시 / 간소 UI ---------- */
+function fmtMB(n) {
+  n = Number(n || 0);
+  if (!n) return "-";
+  return n >= 1024 ? (n / 1024).toFixed(1) + "GB" : Math.round(n) + "MB";
+}
+function setMemBadge(live) {
+  const el = $("memBadge");
+  if (!el) return;
+  live = live || {};
+  if (live.avail_mb == null) { el.textContent = "RAM -"; return; }
+  const p = Number(live.pressure || 0);
+  el.textContent = "RAM " + fmtMB(live.avail_mb);
+  el.className = "badge" + (p >= 2 ? " dead" : (p >= 1 ? " warn" : ""));
+  el.title = "여유 " + fmtMB(live.avail_mb) + " / 전체 " + fmtMB(live.total_mb) +
+    " · " + (live.pressure_label || "");
+}
+function applyUiMode(c) {
+  c = c || state.config || {};
+  const tier = (c._perf && c._perf.tier) || (state.sys && state.sys.tier) || "balanced";
+  const mode = c.ui_lite || "auto";
+  const on = mode === "on" || (mode === "auto" && (tier === "lite" || tier === "low"));
+  document.body.classList.toggle("lite", on);
+  state.liteUi = on;
+}
+function trimChat() {
+  if (state.bulkLoad || state.running) return;
+  const msgs = chatEl.querySelectorAll(".msg");
+  const max = state.liteUi ? 260 : 900;
+  if (msgs.length <= max) return;
+  let remove = msgs.length - max;
+  for (let i = 0; i < msgs.length && remove > 0; i++) {
+    if (state.bubble && msgs[i].contains(state.bubble)) break;
+    msgs[i].remove(); remove--;
+  }
+}
+
+/* ============================ 마크다운 ============================ */
+function inline(s) {
+  s = s.replace(/`([^`]+)`/g, (m, c) => "<code>" + c + "</code>");
+  s = s.replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
+  s = s.replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<i>$2</i>");
+  s = s.replace(/~~([^~]+)~~/g, "<s>$1</s>");
+  s = s.replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g,
+    '<a href="$2" target="_blank" rel="noreferrer">$1</a>');
+  s = s.replace(/(^|[\s(])(https?:\/\/[^\s<)]+)/g,
+    '$1<a href="$2" target="_blank" rel="noreferrer">$2</a>');
+  return s;
+}
+function md(text) {
+  const src = String(text == null ? "" : text).replace(/\r\n/g, "\n");
+  const codes = [];
+  let s = src.replace(/```([^\n`]*)\n?([\s\S]*?)```/g, (m, lang, code) => {
+    codes.push({ lang: (lang || "").trim(), code: code.replace(/\n$/, "") });
+    return "\u0000C" + (codes.length - 1) + "\u0000";
+  });
+  s = esc(s);
+  const lines = s.split("\n");
+  let out = [], inUl = false, inOl = false, inQuote = false, table = [];
+  const closeLists = () => {
+    if (inUl) { out.push("</ul>"); inUl = false; }
+    if (inOl) { out.push("</ol>"); inOl = false; }
+    if (inQuote) { out.push("</blockquote>"); inQuote = false; }
+  };
+  const flushTable = () => {
+    if (!table.length) return;
+    let rows = table.filter(r => !/^\s*\|?[\s:|-]+\|?\s*$/.test(r) || table.indexOf(r) === 0);
+    rows = table.filter((r, i) => !(i === 1 && /^[\s:|-]+$/.test(r.replace(/\|/g, ""))));
+    if (rows.length) {
+      out.push("<table>");
+      rows.forEach((row, i) => {
+        const cells = row.replace(/^\s*\|/, "").replace(/\|\s*$/, "").split("|");
+        const tag = i === 0 ? "th" : "td";
+        out.push("<tr>" + cells.map(c => `<${tag}>` + inline(c.trim()) + `</${tag}>`).join("") + "</tr>");
+      });
+      out.push("</table>");
+    }
+    table = [];
+  };
+  for (const raw of lines) {
+    const line = raw;
+    const cm = line.match(/^\u0000C(\d+)\u0000$/);
+    if (cm) {
+      closeLists(); flushTable();
+      const c = codes[+cm[1]];
+      out.push('<div class="codeWrap"><span class="lang">' + esc(c.lang) +
+        '</span><button class="cp" data-copy="1">복사</button><pre><code>' +
+        esc(c.code) + "</code></pre></div>");
+      continue;
+    }
+    if (/^\s*$/.test(line)) { closeLists(); flushTable(); continue; }
+    if (/^\s*\|.*\|\s*$/.test(line)) { closeLists(); table.push(line); continue; }
+    flushTable();
+    let m;
+    if ((m = line.match(/^(#{1,6})\s+(.*)$/))) {
+      closeLists(); const lv = Math.min(m[1].length + 1, 6);
+      out.push(`<h${lv}>` + inline(m[2]) + `</h${lv}>`); continue;
+    }
+    if (/^\s*([-*_])\s*\1\s*\1[\s-*_]*$/.test(line)) { closeLists(); out.push("<hr>"); continue; }
+    if ((m = line.match(/^\s*[-*+]\s+(.*)$/))) {
+      if (!inUl) { closeLists(); out.push("<ul>"); inUl = true; }
+      out.push("<li>" + inline(m[1]) + "</li>"); continue;
+    }
+    if ((m = line.match(/^\s*\d+[.)]\s+(.*)$/))) {
+      if (!inOl) { closeLists(); out.push("<ol>"); inOl = true; }
+      out.push("<li>" + inline(m[1]) + "</li>"); continue;
+    }
+    if ((m = line.match(/^>\s?(.*)$/))) {
+      if (!inQuote) { closeLists(); out.push("<blockquote>"); inQuote = true; }
+      out.push(inline(m[1]) + "<br>"); continue;
+    }
+    closeLists();
+    out.push("<p>" + inline(line) + "</p>");
+  }
+  closeLists(); flushTable();
+  return out.join("");
+}
+function renderDiff(diff) {
+  return String(diff || "").split("\n").map(l => {
+    let cls = "";
+    if (l.startsWith("+") && !l.startsWith("+++")) cls = "add";
+    else if (l.startsWith("-") && !l.startsWith("---")) cls = "del";
+    else if (l.startsWith("@@")) cls = "hunk";
+    return '<span class="' + cls + '">' + esc(l) + "</span>";
+  }).join("\n");
+}
+
+/* ============================ 메시지 ============================ */
+function atBottom() {
+  return chatEl.scrollTop + chatEl.clientHeight >= chatEl.scrollHeight - 60;
+}
+function scroll() {
+  if (state.autoScroll) chatEl.scrollTop = chatEl.scrollHeight;
+}
+chatEl.addEventListener("scroll", () => { state.autoScroll = atBottom(); });
+
+function addMsg(role, text) {
+  const wrap = document.createElement("div");
+  wrap.className = "msg " + role;
+  wrap.innerHTML = '<div class="who">' + (role === "user" ? "나" : "AI") + '</div><div class="bubble"></div>';
+  const b = wrap.querySelector(".bubble");
+  if (text) b.innerHTML = md(text);
+  chatEl.appendChild(wrap);
+  trimChat();
+  scroll();
+  return b;
+}
+function addToolCard(name, args, subId) {
+  state.toolSeq++;
+  const id = "tool" + state.toolSeq;
+  const card = document.createElement("div");
+  card.className = "tool"; card.id = id;
+  card.dataset.t0 = String(Date.now());
+  card.innerHTML =
+    '<div class="hd"><span>🔧</span><span class="nm">' + esc(name) + '</span>' +
+    '<span class="st">실행 중…</span></div>' +
+    '<div class="bd"></div>';
+  card.querySelector(".hd").onclick = () => card.classList.toggle("open");
+  const host = subId && state.subCards[subId] ? state.subCards[subId].body : chatEl;
+  host.appendChild(card);
+  scroll();
+  return { id, card, name };
+}
+function fillToolResult(toolId, ev) {
+  const card = document.getElementById(toolId);
+  if (!card) return;
+  const st = card.querySelector(".st");
+  const t0 = Number(card.dataset.t0 || 0);
+  const sec = t0 ? (Date.now() - t0) / 1000 : 0;
+  st.innerHTML = (ev.ok ? "완료" : "실패") +
+    (sec >= 0.2 ? ' <span class="el">' + sec.toFixed(1) + "초</span>" : "");
+  st.style.color = ev.ok ? "var(--ok)" : "var(--err)";
+  const bd = card.querySelector(".bd");
+  if (ev.diff) {
+    const d = document.createElement("pre");
+    d.className = "diff"; d.innerHTML = renderDiff(ev.diff);
+    bd.innerHTML = "";
+    bd.appendChild(Object.assign(document.createElement("div"),
+      { className: "note", textContent: "변경 내용" }));
+    bd.appendChild(d);
+  }
+  const pre = document.createElement("pre");
+  pre.textContent = ev.result || "(빈 결과)";
+  bd.appendChild(pre);
+  if (ev.backup) {
+    const n = document.createElement("div");
+    n.className = "note"; n.textContent = "↩ 백업 저장됨 (🗂 백업에서 되돌리기 가능)";
+    bd.appendChild(n);
+  }
+  if (!ev.ok) card.classList.add("open");
+}
+
+function renderTodos(todos) {
+  state.todos = todos || [];
+  const old = document.querySelector(".todos.panel");
+  if (old) old.remove();
+  if (!state.todos.length) return;
+  const box = document.createElement("div");
+  box.className = "todos panel";
+  box.innerHTML = "<b style='font-size:12.5px'>📋 할 일</b>" + state.todos.map(t => {
+    const m = { done: "✔", in_progress: "▶" }[t.status] || "☐";
+    return '<div class="ti ' + (t.status === "done" ? "done" : "") + '"><span class="m">' + m +
+      "</span><span>" + esc(t.text) + "</span></div>";
+  }).join("");
+  chatEl.appendChild(box);
+  scroll();
+}
+
+/* ============================ 세션 ============================ */
+async function loadSessions(q) {
+  state.sessions = await api("/api/sessions" + (q ? "?q=" + encodeURIComponent(q) : ""));
+  const el = $("sessList"); el.innerHTML = "";
+  for (const s of state.sessions) {
+    const d = document.createElement("div");
+    d.className = "sess" + (s.id === state.currentId ? " active" : "");
+    d.title = (s.preview || "") + "\n" + fmtTime(s.updated);
+    const dot = s.active ? '<span class="run" title="작업 진행 중"></span>'
+      : (s.resumable ? '<span class="run stop" title="중단됨 · 이어서 가능"></span>' : "");
+    d.innerHTML = '<div class="t">' + dot + esc(s.title || "새 대화") + "</div>" +
+      '<div class="c">' + (s.count || 0) + '</div><div class="x" title="삭제">✕</div>';
+    d.onclick = e => {
+      if (e.target.classList.contains("x")) { e.stopPropagation(); delSession(s.id); }
+      else openSession(s.id);
+    };
+    d.ondblclick = () => renameSession(s.id, s.title);
+    el.appendChild(d);
+  }
+}
+async function openSession(id) {
+  const s = await api("/api/sessions/" + id);
+  if (s.error) return;
+  state.currentId = s.id;
+  $("title").textContent = s.title || "새 대화";
+  chatEl.innerHTML = "";
+  state.subCards = {};
+  state.bulkLoad = true;
+  renderTodos(s.todos || []);
+  for (const m of s.messages || []) {
+    if (m.role !== "user" && m.role !== "assistant") continue;
+    const b = addMsg(m.role, m.content || "");
+    if (m.trace && m.trace.length) {
+      const n = document.createElement("div");
+      n.className = "meta";
+      n.textContent = "도구 " + m.trace.length + "회: " +
+        m.trace.map(t => t.name).join(", ");
+      b.appendChild(n);
+    }
+  }
+  state.bulkLoad = false;
+  trimChat();
+  scroll();
+  loadSessions($("sessSearch").value.trim());
+  refreshUsage();
+  checkResume(s.id);
+}
+function newSession() {
+  state.currentId = null; chatEl.innerHTML = ""; state.todos = [];
+  state.subCards = {};
+  $("title").textContent = "새 대화";
+  loadSessions(); setUsage(0, 0);
+}
+async function delSession(id) {
+  if (!confirm("이 대화를 삭제할까요?")) return;
+  await fetch("/api/sessions/" + id, { method: "DELETE" });
+  if (id === state.currentId) newSession();
+  loadSessions($("sessSearch").value.trim());
+}
+async function renameSession(id, cur) {
+  const t = prompt("대화 이름", cur || "");
+  if (t === null) return;
+  await post("/api/sessions/" + id + "/rename", { title: t });
+  if (id === state.currentId) $("title").textContent = t || "새 대화";
+  loadSessions($("sessSearch").value.trim());
+}
+function exportSession() {
+  if (!state.currentId) return alert("먼저 대화를 선택하세요.");
+  const fmt = confirm("Markdown(.md)로 내보낼까요?\n취소를 누르면 JSON(.json)로 내보냅니다.") ? "md" : "json";
+  window.open("/api/sessions/" + state.currentId + "/export?format=" + fmt, "_blank");
+}
+
+/* ============================ 사용량 ============================ */
+function setUsage(tokens, limit, percent) {
+  $("usageBar").style.width = (percent || 0) + "%";
+  $("usageBar").style.background = percent > 85
+    ? "var(--err)" : "linear-gradient(90deg,var(--accent),var(--accent2))";
+  $("usageText").textContent = state.config.show_usage === false ? "" :
+    (tokens ? `컨텍스트 ≈ ${tokens.toLocaleString()} / ${limit.toLocaleString()} 토큰` : "");
+  $("usageWrap").style.display = state.config.show_usage === false ? "none" : "";
+}
+async function refreshUsage() {
+  if (!state.currentId) return setUsage(0, 0, 0);
+  try {
+    const u = await api("/api/usage?session_id=" + state.currentId);
+    setUsage(u.tokens, u.limit, u.percent);
+  } catch (e) { }
+}
+
+/* ============================ 채팅 ============================ */
+function handleEvent(d) {
+  switch (d.type) {
+    case "session":
+      state.currentId = d.id;
+      $("title").textContent = d.title || "새 대화";
+      break;
+    case "delta":
+      state.streamed += d.text;
+      if (state.bubble) { state.bubble.innerHTML = md(state.streamed); scroll(); }
+      break;
+    case "reset":
+      state.streamed = "";
+      if (state.bubble) state.bubble.innerHTML =
+        '<span style="color:var(--muted)">도구 실행 중…</span>';
+      break;
+    case "tool":
+      if (d.sub_id) {
+        const r = addToolCard(d.name, d.args, d.sub_id);
+        (state.subCards[d.sub_id].tools = state.subCards[d.sub_id].tools || []).push(r.id);
+      } else {
+        state.lastTool = addToolCard(d.name, d.args);
+      }
+      break;
+    case "tool_result": {
+      // 하위/본체의 해당 카드에 결과 채우기 (병렬일 때 sub_id 로 정확히 찾는다)
+      let card = null;
+      const sc = d.sub_id && state.subCards[d.sub_id];
+      if (sc && sc.tools) {
+        for (let i = sc.tools.length - 1; i >= 0; i--) {
+          const c = document.getElementById(sc.tools[i]);
+          if (c && c.querySelector(".st").textContent.indexOf("실행 중") === 0) { card = c; break; }
+        }
+      }
+      if (!card) {
+        const cards = [].slice.call(document.querySelectorAll(".tool"))
+          .filter(c => c.querySelector(".st").textContent.indexOf("실행 중") === 0);
+        card = cards.length ? cards[cards.length - 1] : null;
+      }
+      if (card) fillToolResult(card.id, d);
+      break;
+    }
+    case "parallel":
+      addMsg("assistant", "⚡ 하위 에이전트 " + (d.count || 0) + "개를 동시에 실행합니다 (" +
+        (d.agents || []).join(", ") + ")");
+      break;
+    case "note":
+      if (d.text) addMsg("assistant", "ℹ " + d.text);
+      break;
+    case "checkpoint":
+      if (d.ok && d.sha) {
+        const n = document.createElement("div");
+        n.className = "note";
+        n.textContent = "⏱ 되돌리기 지점 저장됨 (" + String(d.sha).slice(0, 8) + ")";
+        chatEl.appendChild(n); scroll();
+      } else if (d.ok === false && d.reason) {
+        addMsg("assistant", "⏱ 체크포인트를 만들지 못했습니다: " + d.reason);
+      }
+      break;
+    case "subagent":
+      if (d.status === "start") {
+        const wrap = document.createElement("div");
+        wrap.className = "subwrap";
+        wrap.innerHTML = '<div class="subhd">' + (d.parallel ? "⚡ " : "🤖 ") +
+          "하위 에이전트: " + esc((d.prompt || "").slice(0, 90)) +
+          '…</div><div class="subbody"></div>';
+        chatEl.appendChild(wrap); scroll();
+        state.subCards[d.sub_id] = { el: wrap, body: wrap.querySelector(".subbody"), tools: [] };
+      } else if (state.subCards[d.sub_id]) {
+        const box = state.subCards[d.sub_id].el;
+        const r = document.createElement("div");
+        r.className = "note";
+        r.textContent = ("결과: " + (d.text || "")).slice(0, 301);
+        box.appendChild(r);
+        scroll();
+      }
+      break;
+    case "todos": renderTodos(d.todos); break;
+    case "compact":
+      addMsg("assistant", "🧹 컨텍스트가 길어져 이전 대화를 요약했습니다. (압축 " +
+        d.info.before + "→" + d.info.after + " 토큰)");
+      break;
+    case "usage": setUsage(d.tokens, d.limit, d.percent); break;
+    case "approval": queueApproval(d); break;
+    case "approval_result": break;
+    case "final":
+      state.streamed = d.text || "";
+      if (state.bubble) state.bubble.innerHTML = md(state.streamed);
+      scroll();
+      break;
+    case "saved":
+      if (d.title) $("title").textContent = d.title;
+      break;
+    case "error":
+      if (state.bubble) state.bubble.innerHTML +=
+        '<div class="err">⚠ ' + esc(d.message) + "</div>";
+      break;
+    case "local":
+      state.streamed = d.text || "";
+      if (state.bubble) { state.bubble.innerHTML = md(state.streamed); scroll(); }
+      break;
+    case "agent":
+      break;
+    case "run":
+      state.runId = d.run_id || state.runId;
+      setWork(d.phase || "시작", "");
+      break;
+    case "status":
+      state.lastEventAt = Date.now();
+      setWork(d.phase || "작업 중", d.detail || "");
+      break;
+    case "ping":
+      state.lastEventAt = Date.now();
+      if (d.free_mb != null) state.freeMb = d.free_mb;
+      if (d.pressure != null) state.pressure = d.pressure;
+      setMemBadge({ avail_mb: d.free_mb, pressure: d.pressure,
+        pressure_label: d.pressure_label, total_mb: (state.config && state.config._mem_total_mb) });
+      break;
+    case "done":
+      state.doneOk = true;
+      break;
+  }
+}
+
+/* ---------- 작업 상태 표시줄 ---------- */
+let workTimer = null;
+function setWork(phase, detail) {
+  const w = $("workBar");
+  w.querySelector(".ph").textContent = phase || "작업 중";
+  w.querySelector(".dt").textContent = detail ? "· " + detail : "";
+}
+function workStart(phase, detail) {
+  state.running = true;
+  state.runStart = Date.now();
+  state.lastEventAt = Date.now();
+  const w = $("workBar");
+  w.classList.add("on"); w.classList.remove("warn", "dead");
+  $("runDot").classList.add("on");
+  setWork(phase, detail);
+  if (workTimer) clearInterval(workTimer);
+  workTimer = setInterval(workTick, 1000);
+  workTick();
+}
+function workTick() {
+  if (!state.running) return;
+  const el = Math.round((Date.now() - state.runStart) / 1000);
+  const since = Math.round((Date.now() - state.lastEventAt) / 1000);
+  const w = $("workBar");
+  let s = "경과 " + el + "초";
+  if (since >= 5) s += " · 무응답 " + since + "초";
+  if (state.freeMb != null) s += " · 여유 " + fmtMB(state.freeMb);
+  if (state.pressure >= 2) s += " · ⚠ 메모리 부족";
+  w.querySelector(".sp2").textContent = s;
+  if (since >= 45) { w.classList.add("dead"); w.classList.remove("warn"); }
+  else if (since >= 12) { w.classList.add("warn"); w.classList.remove("dead"); }
+  else { w.classList.remove("warn", "dead"); }
+}
+function workEnd() {
+  state.running = false;
+  if (workTimer) { clearInterval(workTimer); workTimer = null; }
+  $("workBar").classList.remove("on", "warn", "dead");
+  $("runDot").classList.remove("on");
+}
+
+/* ---------- 스트리밍 공통 처리 ---------- */
+async function streamChat(url, body) {
+  state.streamed = ""; state.autoScroll = true; state.doneOk = false;
+  state.controller = new AbortController();
+  $("sendBtn").style.display = "none";
+  $("stopBtn").style.display = "inline-block";
+  workStart("시작", "");
+  try {
+    const res = await fetch(url, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body), signal: state.controller.signal
+    });
+    if (!res.ok) {
+      let msg = await res.text();
+      try { msg = JSON.parse(msg).error || msg; } catch (e) { }
+      throw new Error(msg);
+    }
+    const reader = res.body.getReader(); const dec = new TextDecoder();
+    let buf = "";
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      state.lastEventAt = Date.now();
+      const parts = buf.split("\n\n"); buf = parts.pop();
+      for (const part of parts) {
+        const line = part.trim();
+        if (!line.startsWith("data:")) continue;
+        let d; try { d = JSON.parse(line.slice(5).trim()); } catch (e) { continue; }
+        handleEvent(d);
+      }
+    }
+  } catch (e) {
+    if (e.name === "AbortError") {
+      if (state.bubble) state.bubble.innerHTML = md(state.streamed) +
+        '<div class="meta">⏹ 사용자가 중지했습니다.</div>';
+    } else if (state.bubble) {
+      state.bubble.innerHTML = '<span class="err">오류: ' + esc(e.message) + "</span>";
+    }
+  } finally {
+    state.controller = null;
+    workEnd();
+    $("sendBtn").style.display = "inline-block";
+    $("stopBtn").style.display = "none";
+    $("prompt").focus();
+    loadSessions($("sessSearch").value.trim());
+    refreshUsage();
+    if (!state.doneOk) checkResume(state.currentId);
+  }
+}
+
+async function send() {
+  let text = $("prompt").value.trim();
+  if (!text && !state.attachments.length) return;
+  hideSlash();
+  const attachments = state.attachments.slice();
+  const ub = addMsg("user", text + (attachments.length
+    ? "\n\n" + attachments.map(a => (a.kind === "image" ? "🖼 " : a.kind === "pdf" ? "📄 " : "📎 ") + a.name).join("\n") : ""));
+  attachments.filter(a => a.kind === "image" && a.preview).forEach(a => {
+    const im = document.createElement("img");
+    im.src = a.preview; im.style.maxHeight = "130px"; im.style.maxWidth = "100%";
+    im.style.borderRadius = "8px"; im.style.marginTop = "6px"; im.style.display = "block";
+    ub.appendChild(im);
+  });
+  $("prompt").value = ""; state.attachments = []; renderAttachments(); autoGrow();
+  const rb = document.getElementById("resumeBanner"); if (rb) rb.remove();
+  state.bubble = addMsg("assistant", "");
+  state.bubble.innerHTML = '<span style="color:var(--muted)"><i>생각 중…</i></span>';
+  state.runId = null;
+  await streamChat("/api/chat", { session_id: state.currentId, message: text, attachments });
+}
+
+async function resumeRun(rec) {
+  const rb = document.getElementById("resumeBanner"); if (rb) rb.remove();
+  state.bubble = addMsg("assistant", "");
+  state.bubble.innerHTML = '<span style="color:var(--muted)"><i>이어서 작업 중…</i></span>';
+  state.runId = rec.id;
+  await streamChat("/api/resume", { run_id: rec.id, session_id: rec.session_id });
+}
+
+/* ---------- 중단 복구 ---------- */
+async function checkResume(sid) {
+  if (!sid) return;
+  try {
+    const r = await api("/api/runs");
+    const rec = (r.runs || []).find(x => x.session_id === sid && x.resumable);
+    if (rec) showResumeBanner(rec);
+  } catch (e) { }
+}
+function showResumeBanner(rec) {
+  if (document.getElementById("resumeBanner")) return;
+  const d = document.createElement("div");
+  d.id = "resumeBanner"; d.className = "resume";
+  d.innerHTML = "⚠ 이전 작업이 <b>" + esc(rec.phase || "중단") + "</b> 상태에서 멈췄습니다" +
+    (rec.step ? " (단계 " + rec.step + ")" : "") + "." +
+    '<div class="rb"><button class="primary" id="resumeGo">▶ 이어서 하기</button>' +
+    '<button id="resumeNo">버리기</button></div>';
+  chatEl.appendChild(d); scroll();
+  $("resumeGo").onclick = () => resumeRun(rec);
+  $("resumeNo").onclick = async () => {
+    try { await post("/api/runs/discard", { run_id: rec.id }); } catch (e) { }
+    d.remove();
+  };
+}
+
+/* ============================ 승인 ============================ */
+function queueApproval(d) {
+  state.apQueue.push(d);
+  if (!state.apCurrent) showNextApproval();
+}
+function showNextApproval() {
+  const d = state.apQueue.shift();
+  if (!d) { state.apCurrent = null; $("apOverlay").classList.remove("show"); return; }
+  state.apCurrent = d;
+  $("apKind").textContent = d.title || d.kind || "작업";
+  $("apTitle").textContent = (d.extra && d.extra.tool ? d.extra.tool : d.name || "");
+  $("apDetail").textContent = d.detail || JSON.stringify(d.extra || {}, null, 2);
+  $("apOverlay").classList.add("show");
+}
+async function answerApproval(decision, remember) {
+  const d = state.apCurrent;
+  if (!d) return;
+  $("apOverlay").classList.remove("show");
+  try { await post("/api/approve", { id: d.id, decision, remember: !!remember }); } catch (e) { }
+  state.apCurrent = null;
+  setTimeout(showNextApproval, 120);
+}
+
+/* ============================ 첨부 ============================ */
+function renderAttachments() {
+  const row = $("attachRow");
+  if (!state.attachments.length) { row.style.display = "none"; row.innerHTML = ""; return; }
+  row.style.display = "flex";
+  row.innerHTML = state.attachments.map((a, i) => {
+    const icon = a.kind === "image" ? "🖼" : (a.kind === "pdf" ? "📄" : "📎");
+    const thumb = a.kind === "image" && a.preview
+      ? '<img src="' + a.preview + '" style="height:22px;border-radius:4px;vertical-align:middle"> ' : "";
+    return '<span class="chip">' + icon + " " + thumb + "<b>" + esc(a.name) +
+      "</b> <span data-i='" + i + "'>✕</span></span>";
+  }).join("");
+  row.querySelectorAll("span[data-i]").forEach(el => el.onclick = () => {
+    state.attachments.splice(+el.dataset.i, 1); renderAttachments();
+  });
+}
+const ATTACH_MAX_MB = 20;
+function readAsDataURL(file) {
+  return new Promise((res, rej) => {
+    const rd = new FileReader();
+    rd.onload = () => res(String(rd.result));
+    rd.onerror = () => rej(rd.error);
+    rd.readAsDataURL(file);
+  });
+}
+// 이미지를 긴 변 maxSide 이하로 줄여 base64 크기/토큰을 절약한다
+function shrinkImage(dataUrl, maxSide, mime) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      let { width: w, height: h } = img;
+      const scale = Math.min(1, maxSide / Math.max(w, h));
+      if (scale >= 1 && dataUrl.length < 700000) { resolve({ url: dataUrl, mime }); return; }
+      const cv = document.createElement("canvas");
+      cv.width = Math.max(1, Math.round(w * scale));
+      cv.height = Math.max(1, Math.round(h * scale));
+      cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
+      const png = (mime || "").indexOf("png") >= 0 || (mime || "").indexOf("gif") >= 0;
+      try { resolve({ url: cv.toDataURL(png ? "image/png" : "image/jpeg", 0.85), mime: png ? "image/png" : "image/jpeg" }); }
+      catch (e) { resolve({ url: dataUrl, mime }); }
+    };
+    img.onerror = () => resolve({ url: dataUrl, mime });
+    img.src = dataUrl;
+  });
+}
+async function onFiles(files) {
+  const maxSide = (state.config && state.config.image_max_side) || 1568;
+  const maxMb = (state.config && state.config.attach_max_upload_mb) || ATTACH_MAX_MB;
+  for (const f of files) {
+    if (state.attachments.length >= 8) { alert("첨부는 최대 8개입니다."); break; }
+    if (f.size > maxMb * 1024 * 1024) {
+      alert(f.name + " 파일이 너무 큽니다(" + Math.round(f.size / 1048576) + "MB, 최대 " + maxMb + "MB)");
+      continue;
+    }
+    const isImg = /^image\//.test(f.type) || /\.(png|jpe?g|gif|webp|bmp)$/i.test(f.name);
+    const isPdf = f.type === "application/pdf" || /\.pdf$/i.test(f.name);
+    try {
+      if (isImg) {
+        const raw = await readAsDataURL(f);
+        const s = await shrinkImage(raw, maxSide, f.type);
+        const comma = s.url.indexOf(",");
+        const b64 = s.url.slice(comma + 1);
+        const kb = Math.round(b64.length * 0.75 / 1024);
+        state.attachments.push({ name: f.name, kind: "image", mime: s.mime || "image/png",
+                                 data: b64, preview: s.url, size: kb });
+      } else if (isPdf) {
+        const raw = await readAsDataURL(f);
+        state.attachments.push({ name: f.name, kind: "pdf", mime: "application/pdf",
+                                 data: raw.slice(raw.indexOf(",") + 1), size: Math.round(f.size / 1024) });
+      } else {
+        const rd = new FileReader();
+        const txt = await new Promise(res => { rd.onload = () => res(String(rd.result)); rd.readAsText(f); });
+        state.attachments.push({ name: f.name, kind: "text", content: txt.slice(0, 60000) });
+      }
+      renderAttachments();
+    } catch (e) { alert("첨부 실패: " + f.name); }
+  }
+}
+
+/* ============================ 설정 ============================ */
+function switchTab(name) {
+  document.querySelectorAll("#setTabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === name));
+  document.querySelectorAll(".tabpane").forEach(p => p.style.display = "none");
+  const el = $("tab-" + name); if (el) el.style.display = "";
+  if (name === "mcp") { loadMcp(); }
+  if (name === "rules") { loadRules(); }
+  if (name === "skills") { loadSkills(); }
+  if (name === "cmds") { loadCmds(); }
+  if (name === "agents") { loadAgents(); }
+  if (name === "perf") {
+    refreshResources(true);
+    if (!state.resTimer) {
+      state.resTimer = setInterval(() => {
+        const pane = $("tab-perf");
+        const open = $("setOverlay").classList.contains("show");
+        if (open && pane && pane.style.display !== "none") refreshResources(true);
+      }, 5000);
+    }
+  }
+}
+
+/* ---------- 권한 UI ---------- */
+function renderPermKinds(actions) {
+  const meta = state.meta || {};
+  const order = meta.kind_order || ["read", "write", "delete", "move", "copy", "mkdir", "shell", "network", "mcp"];
+  const label = meta.kind_label || {};
+  const alabel = meta.action_label || { allow: "허용", ask: "물어보기", deny: "차단" };
+  const desc = {
+    read: "파일 읽기·목록·검색", write: "파일 생성·수정", delete: "파일·폴더 삭제",
+    move: "이동·이름변경", copy: "복사", mkdir: "폴더 생성",
+    shell: "셸 명령 실행", network: "웹 검색·페이지 가져오기", mcp: "MCP 서버 도구"
+  };
+  const box = $("permKinds"); box.innerHTML = "";
+  const tbl = document.createElement("table"); tbl.className = "permTable";
+  tbl.innerHTML = "<tr><th style='width:150px'>종류</th><th style='width:140px'>동작</th><th>설명</th></tr>";
+  order.forEach(k => {
+    const cur = (actions || {})[k] || "ask";
+    const tr = document.createElement("tr");
+    tr.innerHTML = "<td>" + esc(label[k] || k) + "</td><td><select data-kind='" + esc(k) + "'>" +
+      ["allow", "ask", "deny"].map(a => "<option value='" + a + "'" + (a === cur ? " selected" : "") + ">" +
+        esc(alabel[a] || a) + "</option>").join("") + "</select></td><td class='sub'>" + esc(desc[k] || "") + "</td>";
+    tbl.appendChild(tr);
+  });
+  box.appendChild(tbl);
+}
+function collectPermKinds() {
+  const out = {};
+  document.querySelectorAll("#permKinds select[data-kind]").forEach(s => { out[s.dataset.kind] = s.value; });
+  return out;
+}
+function permRuleRow(r) {
+  const meta = state.meta || {};
+  const acts = meta.action_label || { allow: "허용", ask: "물어보기", deny: "차단" };
+  const d = document.createElement("div");
+  d.className = "mcpItem"; d.style.padding = "8px";
+  d.innerHTML =
+    "<div style='display:flex;gap:8px;align-items:center'>" +
+    "<input type='text' class='r-tool' list='toolNames' style='width:170px' placeholder='도구 또는 종류' value='" +
+    esc(r.tool || "*") + "'>" +
+    "<input type='text' class='r-pat' style='flex:1' placeholder='패턴 (예: git push*, *.env)' value='" +
+    esc(r.pattern || "*") + "'>" +
+    "<select class='r-act' style='width:110px'>" +
+    ["allow", "ask", "deny"].map(a => "<option value='" + a + "'" +
+      ((r.action || "ask") === a ? " selected" : "") + ">" + esc(acts[a] || a) + "</option>").join("") +
+    "</select><button class='r-del' title='규칙 삭제'>✕</button></div>";
+  d.querySelector(".r-del").onclick = () => d.remove();
+  return d;
+}
+function renderPermRules(rules) {
+  const box = $("permRules"); box.innerHTML = "";
+  (rules || []).forEach(r => box.appendChild(permRuleRow(r)));
+}
+function collectPermRules() {
+  const out = [];
+  document.querySelectorAll("#permRules .mcpItem").forEach(d => {
+    const tool = d.querySelector(".r-tool").value.trim() || "*";
+    const pattern = d.querySelector(".r-pat").value.trim() || "*";
+    const action = d.querySelector(".r-act").value;
+    out.push({ tool, pattern, action });
+  });
+  return out;
+}
+function ensureToolNames() {
+  let dl = $("toolNames");
+  if (!dl) {
+    dl = document.createElement("datalist"); dl.id = "toolNames";
+    document.body.appendChild(dl);
+  }
+  const meta = state.meta || {};
+  const names = state.allTools.concat(Object.keys(meta.kind_label || {}), ["*"]);
+  dl.innerHTML = "";
+  names.forEach(n => { const o = document.createElement("option"); o.value = n; dl.appendChild(o); });
+}
+
+function fillSettings(c) {
+  state.meta = c._meta || state.meta || {};
+  $("provider").value = c.provider || "ollama";
+  $("ollama_url").value = c.ollama_url || "";
+  $("ollama_model").value = c.ollama_model || "";
+  $("openai_base_url").value = c.openai_base_url || "";
+  $("openai_api_key").value = c.openai_api_key || "";
+  $("openai_model").value = c.openai_model || "";
+  $("temperature").value = c.temperature ?? 0.3;
+  $("workspace").value = c.workspace || "";
+  $("allow_outside_workspace").checked = !!c.allow_outside_workspace;
+  $("auto_backup").checked = c.auto_backup !== false;
+  $("command_timeout").value = c.command_timeout || 120;
+  $("backup_keep").value = c.backup_keep || 300;
+  $("max_steps").value = c.max_steps || 40;
+  $("subagent_max_steps").value = c.subagent_max_steps || 20;
+  $("tool_mode").value = c.tool_mode || "auto";
+  $("max_tool_output").value = c.max_tool_output || 20000;
+  $("keep_recent_messages").value = c.keep_recent_messages || 8;
+  $("auto_compact").checked = c.auto_compact !== false;
+  $("compact_threshold").value = c.compact_threshold || 24000;
+  $("low_spec").value = c.low_spec || "auto";
+  $("auto_optimize").value = c.auto_optimize === false ? "false" : "true";
+  $("memory_guard").checked = c.memory_guard !== false;
+  $("ollama_num_ctx").value = c.ollama_num_ctx ?? 8192;
+  $("ollama_num_predict").value = c.ollama_num_predict || 0;
+  $("ollama_keep_alive").value = c.ollama_keep_alive || "30m";
+  $("ollama_think").value = c.ollama_think || "auto";
+  $("ollama_connect_timeout").value = c.ollama_connect_timeout || 8;
+  $("ollama_api_key").value = c.ollama_api_key || "";
+  $("auto_start_ollama").checked = c.auto_start_ollama !== false;
+  $("lan_scan_subnets").value = c.lan_scan_subnets || 3;
+  renderApiList(c.openai_presets || []);
+  state.apiActive = c.openai_preset || "";
+  $("release_on_exit").value = c.release_on_exit || "auto";
+  $("ui_lite").value = c.ui_lite || "auto";
+  $("cleanup_on_exit").checked = c.cleanup_on_exit !== false;
+  $("subagent_parallel").value = c.subagent_parallel || "auto";
+  $("subagent_parallel_max").value = c.subagent_parallel_max || 3;
+  $("git_undo").value = c.git_undo || "auto";
+  $("git_undo_max_files").value = c.git_undo_max_files || 20000;
+  $("git_undo_max_mb").value = c.git_undo_max_mb || 400;
+  $("attachments_enabled").checked = c.attachments_enabled !== false;
+  $("image_max_side").value = c.image_max_side || 1568;
+  $("attach_max_upload_mb").value = c.attach_max_upload_mb || 20;
+  $("image_history_turns").value = c.image_history_turns || 1;
+  $("pdf_max_pages").value = c.pdf_max_pages || 50;
+  $("perfHint").textContent = "사양에 맞춰 컨텍스트·출력·병렬 실행을 자동으로 조정합니다. "
+    + "직접 바꾼 값은 자동 조정에서 제외됩니다.";
+  renderPerf(c._perf || {}, c._perf_live);
+  renderServers(c.ollama_servers || []);
+  applyUiMode(c);
+  setMemBadge({ avail_mb: c._mem_free_mb, total_mb: c._mem_total_mb,
+    pressure: (c._perf_live || {}).pressure || 0,
+    pressure_label: (c._perf_live || {}).pressure_label });
+  $("system_extra").value = c.system_extra || "";
+  $("use_rules_file").checked = c.use_rules_file !== false;
+  $("rules_file").value = c.rules_file || "COMPIYSO.md";
+  $("show_usage").checked = c.show_usage !== false;
+  $("skills_enabled").checked = c.skills_enabled !== false;
+  $("commands_enabled").checked = c.commands_enabled !== false;
+  $("infoVer").textContent = c._version || "-";
+  $("infoData").textContent = c._data_dir || "-";
+  $("infoCfg").textContent = c._config_path || "-";
+  $("verBadge").textContent = "v" + (c._version || "");
+  renderPermKinds(c.permission_actions || {});
+  renderPermRules(c.permission_rules || []);
+  renderMcpEditor(c.mcp_servers || []);
+  if (c._agents) { state.agents = c._agents; renderAgentLists(); }
+  toggleProvider();
+  setTimeout(() => { try { loadQuickModels(); } catch (e) { } }, 60);
+}
+function collectSettings() {
+  return Object.assign({}, cleanCfg(state.config), {
+    provider: $("provider").value,
+    ollama_url: $("ollama_url").value.trim(),
+    ollama_model: $("ollama_model").value.trim(),
+    openai_base_url: $("openai_base_url").value.trim(),
+    openai_api_key: $("openai_api_key").value.trim(),
+    openai_model: $("openai_model").value.trim(),
+    temperature: parseFloat($("temperature").value || "0.3"),
+    workspace: $("workspace").value.trim(),
+    permission_actions: collectPermKinds(),
+    permission_rules: collectPermRules(),
+    allow_outside_workspace: $("allow_outside_workspace").checked,
+    auto_backup: $("auto_backup").checked,
+    command_timeout: parseInt($("command_timeout").value || "120", 10),
+    backup_keep: parseInt($("backup_keep").value || "300", 10),
+    max_steps: parseInt($("max_steps").value || "40", 10),
+    subagent_max_steps: parseInt($("subagent_max_steps").value || "20", 10),
+    tool_mode: $("tool_mode").value,
+    max_tool_output: parseInt($("max_tool_output").value || "20000", 10),
+    keep_recent_messages: parseInt($("keep_recent_messages").value || "8", 10),
+    auto_compact: $("auto_compact").checked,
+    compact_threshold: parseInt($("compact_threshold").value || "24000", 10),
+    low_spec: $("low_spec").value,
+    auto_optimize: $("auto_optimize").value === "true",
+    memory_guard: $("memory_guard").checked,
+    ollama_num_ctx: parseInt($("ollama_num_ctx").value || "0", 10),
+    ollama_num_predict: parseInt($("ollama_num_predict").value || "0", 10),
+    ollama_keep_alive: $("ollama_keep_alive").value.trim() || "30m",
+    ollama_think: $("ollama_think").value,
+    ollama_connect_timeout: parseInt($("ollama_connect_timeout").value || "8", 10),
+    ollama_api_key: $("ollama_api_key").value.trim(),
+    auto_start_ollama: $("auto_start_ollama").checked,
+    lan_scan_subnets: parseInt($("lan_scan_subnets").value || "3", 10) || 3,
+    openai_presets: collectApiPresets(),
+    openai_preset: state.apiActive || "",
+    release_on_exit: $("release_on_exit").value,
+    ui_lite: $("ui_lite").value,
+    cleanup_on_exit: $("cleanup_on_exit").checked,
+    ollama_servers: collectServers(),
+    subagent_parallel: $("subagent_parallel").value,
+    subagent_parallel_max: parseInt($("subagent_parallel_max").value || "3", 10),
+    git_undo: $("git_undo").value,
+    git_undo_max_files: parseInt($("git_undo_max_files").value || "20000", 10),
+    git_undo_max_mb: parseInt($("git_undo_max_mb").value || "400", 10),
+    attachments_enabled: $("attachments_enabled").checked,
+    image_max_side: parseInt($("image_max_side").value || "1568", 10),
+    attach_max_upload_mb: parseInt($("attach_max_upload_mb").value || "20", 10),
+    image_history_turns: parseInt($("image_history_turns").value || "1", 10),
+    pdf_max_pages: parseInt($("pdf_max_pages").value || "50", 10),
+    system_extra: $("system_extra").value,
+    use_rules_file: $("use_rules_file").checked,
+    rules_file: $("rules_file").value.trim() || "COMPIYSO.md",
+    show_usage: $("show_usage").checked,
+    skills_enabled: $("skills_enabled").checked,
+    commands_enabled: $("commands_enabled").checked,
+    subagent_type: $("subagent_type").value || "general",
+    mcp_servers: collectMcp()
+  });
+}
+function toggleProvider() {
+  const p = $("provider").value;
+  $("ollamaBox").style.display = p === "ollama" ? "" : "none";
+  $("openaiBox").style.display = p === "openai" ? "" : "none";
+}
+function effectiveLimit(c) {
+  let lim = c.compact_threshold || 24000;
+  if ((c.provider || "ollama") === "ollama") {
+    const n = parseInt(c.ollama_num_ctx || 0, 10);
+    if (n > 0) lim = Math.min(lim, Math.max(1024, Math.round(n * 0.85)));
+  }
+  return lim;
+}
+async function loadConfig() {
+  state.config = await api("/api/config");
+  state.meta = state.config._meta || {};
+  await initApiPresets();
+  fillSettings(state.config);
+  $("modelBadge").textContent = (state.config.provider === "openai"
+    ? state.config.openai_model : state.config.ollama_model) || "-";
+  $("hint").textContent = "작업 폴더: " + (state.config.workspace || "-");
+  setUsage(0, effectiveLimit(state.config), 0);
+  applyUiMode(state.config);
+  refreshResources(false);
+}
+async function saveSettings() {
+  const c = collectSettings();
+  state.config = await post("/api/config", c);
+  state.meta = state.config._meta || state.meta;
+  fillSettings(state.config);
+  $("modelBadge").textContent = (state.config.provider === "openai"
+    ? state.config.openai_model : state.config.ollama_model) || "-";
+  $("hint").textContent = "작업 폴더: " + (state.config.workspace || "-");
+  $("setOverlay").classList.remove("show");
+  refreshResources(true);
+  loadSessions($("sessSearch").value.trim());
+  loadSlash();
+}
+async function testConn() {
+  const st = $("testStatus");
+  st.className = "status"; st.textContent = "테스트 중…";
+  const r = await post("/api/test", collectSettings());
+  st.className = "status " + (r.ok ? "ok" : "err");
+  st.textContent = r.message;
+}
+async function loadModels() {
+  const u = $("ollama_url").value.trim();
+  const st = $("llmStatus");
+  st.textContent = "모델 목록을 가져오는 중… " + (u || "이 PC");
+  let r;
+  try { r = await api("/api/models" + (u ? "?url=" + encodeURIComponent(u) : "")); }
+  catch (e) { st.textContent = "❌ " + e.message; return; }
+  fillModelDatalist($("modelList"), r.models || []);
+  if (!r.ok) { st.textContent = "❌ " + (r.error || "실패"); return; }
+  renderModelPick([{ title: "🔎 " + urlHost(r.endpoint || u || "Ollama"),
+    url: r.endpoint || u, version: "", models: (r.models || []).map(n => ({ name: n })) }]);
+  st.textContent = "✅ 모델 " + (r.models || []).length + "개 · 목록에서 [사용]을 누르면 선택됩니다.";
+}
+
+/* ---- v1.6.0: 이 PC / 내부 네트워크 모델 자동 탐색 ---- */
+function urlHost(u) {
+  try { return new URL(u).host; } catch (e) { return String(u || ""); }
+}
+function fillModelDatalist(dl, names) {
+  if (!dl) return;
+  const have = new Set(Array.from(dl.options).map(o => o.value));
+  (names || []).forEach(n => {
+    if (!n || have.has(n)) return;
+    const o = document.createElement("option"); o.value = n; dl.appendChild(o); have.add(n);
+  });
+}
+function renderModelPick(groups) {
+  const box = $("modelPick");
+  if (!box) return;
+  box.innerHTML = "";
+  (groups || []).forEach(g => {
+    const d = document.createElement("div");
+    d.className = "mdlGroup";
+    const head = document.createElement("div");
+    head.className = "mdlHead";
+    const title = document.createElement("span");
+    title.textContent = g.title || "Ollama";
+    const u = document.createElement("span");
+    u.className = "u";
+    u.textContent = urlHost(g.url) + (g.version ? " · v" + g.version : "") +
+      " · " + ((g.models || []).length) + "개";
+    const useAll = document.createElement("button");
+    useAll.className = "miniBtn"; useAll.textContent = "이 서버";
+    useAll.onclick = () => pickModel(g.url, (g.models || [])[0] && g.models[0].name);
+    head.append(title, u, useAll);
+    d.appendChild(head);
+    const rows = document.createElement("div");
+    rows.className = "mdlRows";
+    (g.models || []).forEach(m => {
+      const r = document.createElement("div");
+      r.className = "mdlRow";
+      const nm = document.createElement("span");
+      nm.className = "n"; nm.textContent = m.name || "";
+      const meta = document.createElement("span");
+      meta.className = "m";
+      meta.textContent = [fmtSize(m.size), m.params || ""].filter(Boolean).join(" · ");
+      const b = document.createElement("button");
+      b.className = "miniBtn"; b.textContent = "사용";
+      b.onclick = () => pickModel(g.url, m.name, r);
+      r.append(nm, meta, b);
+      rows.appendChild(r);
+    });
+    if (!(g.models || []).length) {
+      const h = document.createElement("div");
+      h.className = "mdlRow";
+      h.innerHTML = "<span class='m'>표시할 모델이 없습니다.</span>";
+      rows.appendChild(h);
+    }
+    d.appendChild(rows);
+    box.appendChild(d);
+  });
+}
+function pickModel(url, model, row) {
+  if (url) $("ollama_url").value = url;
+  if (model) { $("ollama_model").value = model; fillModelDatalist($("modelList"), [model]); }
+  $("provider").value = "ollama"; toggleProvider();
+  document.querySelectorAll("#modelPick .mdlRow").forEach(r => r.classList.remove("on"));
+  if (row) row.classList.add("on");
+  const st = $("llmStatus");
+  st.textContent = "선택: " + (model || "-") + "  ←  " + (url || "-") +
+    "\n[저장]을 누르면 적용됩니다.";
+}
+async function searchLocal() {
+  const st = $("llmStatus");
+  st.textContent = "이 PC의 Ollama 확인 중…";
+  const start = $("auto_start_ollama").checked ? 1 : 0;
+  let r;
+  try { r = await api("/api/llm/local?start=" + start); }
+  catch (e) { st.textContent = "❌ " + e.message; return; }
+  const models = (r.models || []).length ? r.models : (r.installed || []);
+  renderModelPick([{ title: r.running ? "🖥 이 PC" : "🖥 이 PC (서버 꺼짐 · 설치된 모델)",
+    url: r.url, version: "", models }]);
+  fillModelDatalist($("modelList"), models.map(m => m.name));
+  let msg = r.running
+    ? "✅ 이 PC Ollama 실행 중 · 모델 " + models.length + "개"
+    : "⚠ 이 PC Ollama 가 꺼져 있습니다";
+  if (r.started) msg += "\n🔄 " + (r.how ? r.how + " 로 " : "") + "자동으로 켰습니다.";
+  if (r.note) msg += "\n" + r.note;
+  if (r.error) msg += "\n" + r.error;
+  st.textContent = msg;
+  refreshNetworkHint();
+}
+async function searchLan() {
+  const st = $("llmStatus");
+  const n = parseInt($("lan_scan_subnets").value || "3", 10) || 3;
+  st.textContent = "내부 네트워크 검색 중… (" + n + "개 대역, 몇 초 걸립니다)";
+  let r;
+  try { r = await api("/api/llm/scan?refresh=1&subnets=" + n); }
+  catch (e) { st.textContent = "❌ " + e.message; return; }
+  const groups = (r.servers || []).filter(s => s.ok).map(s => ({
+    title: (s.local ? "🖥 이 PC" : "📡 " + urlHost(s.url)),
+    url: s.url, version: s.version || "", models: s.models || []
+  }));
+  renderModelPick(groups);
+  const all = [];
+  (r.servers || []).forEach(s => (s.models || []).forEach(m => all.push(m.name)));
+  fillModelDatalist($("modelList"), all);
+  const secs = ((r.elapsed_ms || 0) / 1000).toFixed(1);
+  if (groups.length) {
+    st.textContent = "✅ 서버 " + groups.length + "개 발견 · 모델 " + all.length +
+      "개 · " + (r.subnets || []).join(", ") + " 대역 " + (r.scanned || 0) +
+      "개 주소를 " + secs + "초에 확인했습니다.";
+  } else {
+    st.textContent = "서버를 찾지 못했습니다 (" + (r.subnets || []).join(", ") +
+      " 대역 · " + secs + "초).\n" +
+      "다른 PC/맥에서 Ollama 를 OLLAMA_HOST=0.0.0.0 으로 실행하고 11434 포트를 방화벽에서 허용해야 합니다.";
+  }
+  if (!(r.servers || []).some(s => s.ok)) {
+    const loc = await api("/api/llm/local?start=0").catch(() => null);
+    if (loc && (loc.installed || []).length && !(loc.running)) {
+      st.textContent += "\n이 PC에는 모델이 " + loc.installed.length + "개 설치되어 있지만 서버가 꺼져 있습니다. [이 PC 검색]을 눌러 켜세요.";
+    }
+  }
+}
+async function probeAddress() {
+  const url = $("ollama_url").value.trim();
+  const st = $("llmStatus");
+  if (!url) { st.textContent = "주소를 입력하세요."; return; }
+  st.textContent = "확인 중… " + url;
+  let r;
+  try { r = await post("/api/ollama/probe", { url }); }
+  catch (e) { st.textContent = "❌ " + e.message; return; }
+  if (!r.ok) { st.textContent = "❌ 연결 실패\n" + (r.error || ""); return; }
+  renderModelPick([{ title: "🔎 " + urlHost(r.url), url: r.url,
+    version: r.version || "", models: r.models || [] }]);
+  fillModelDatalist($("modelList"), (r.models || []).map(m => m.name));
+  st.textContent = "✅ " + r.url + " · v" + (r.version || "?") + " · " +
+    r.latency_ms + "ms · 모델 " + r.count + "개";
+}
+
+/* ---- v1.6.0: API 키 서비스 (Gemini·OpenAI·Groq …) ---- */
+function presetIdForBase(base) {
+  const b = String(base || "").replace(/\/+$/, "");
+  const p = (state.presets || []).find(x => String(x.base_url || "").replace(/\/+$/, "") === b);
+  return p ? p.id : "";
+}
+async function initApiPresets() {
+  try { state.presets = (await api("/api/llm/presets")).presets || []; }
+  catch (e) { state.presets = []; }
+  const sel = $("apiPresetSel");
+  if (sel) {
+    sel.innerHTML = "";
+    (state.presets || []).forEach(p => {
+      const o = document.createElement("option");
+      o.value = p.id;
+      o.textContent = (p.group ? "[" + p.group + "] " : "") + p.name;
+      sel.appendChild(o);
+    });
+  }
+  // v1.6.1: 빠른 연결용 select (그룹별 optgroup)
+  const q = $("quickService");
+  if (q) {
+    q.innerHTML = "";
+    const auto = document.createElement("option");
+    auto.value = "auto";
+    auto.textContent = "🔍 자동 감지 (키만 붙여넣기)";
+    q.appendChild(auto);
+    const order = ["무료 한도", "유료 API", "로컬", "기타"];
+    const groups = {};
+    (state.presets || []).forEach(p => {
+      const g = p.group || "기타";
+      if (p.id === "custom") return;
+      if (!groups[g]) groups[g] = [];
+      groups[g].push(p);
+    });
+    const names = order.filter(g => groups[g]).concat(Object.keys(groups).filter(g => order.indexOf(g) < 0));
+    names.forEach(g => {
+      const og = document.createElement("optgroup");
+      og.label = g;
+      groups[g].forEach(p => {
+        const o = document.createElement("option");
+        o.value = p.id;
+        o.textContent = p.name;
+        og.appendChild(o);
+      });
+      q.appendChild(og);
+    });
+    const cu = document.createElement("option");
+    cu.value = "custom";
+    cu.textContent = "직접 입력 (Base URL 필요)";
+    q.appendChild(cu);
+  }
+}
+
+/* ---- v1.6.1: 키만 넣고 바로 연결 ---- */
+function renderQuickModels(models, cur) {
+  const box = $("quickPick"), sel = $("quickModel");
+  if (!box || !sel) return;
+  let list = (models || []).slice().sort((a, b) => String(a).localeCompare(String(b)));
+  if (!list.length && cur) list = [cur];
+  sel.innerHTML = "";
+  list.forEach(m => {
+    const o = document.createElement("option");
+    o.value = m; o.textContent = m;
+    if (m === cur) o.selected = true;
+    sel.appendChild(o);
+  });
+  box.style.display = list.length ? "flex" : "none";
+}
+
+async function quickConnect() {
+  const st = $("quickStatus");
+  const key = $("quickKey").value.trim();
+  const pid = $("quickService").value;
+  const base = $("openai_base_url").value.trim();
+  const psel = (state.presets || []).find(x => x.id === pid);
+  const sendBase = pid === "custom" ? base : (psel ? (psel.base_url || "") : "");
+  if (!key && !sendBase) {
+    st.textContent = "API 키를 붙여넣으세요. (로컬 서버는 서비스를 고르면 키 없이도 됩니다)";
+    return;
+  }
+  st.textContent = "연결 확인 중… (키로 서비스를 자동 감지합니다)";
+  const r = await post("/api/llm/quick-connect", { key, preset: pid, base_url: sendBase })
+    .catch(e => ({ ok: false, error: e.message }));
+  if (r.models) renderQuickModels(r.models, r.model);
+  if (!r.ok) {
+    st.textContent = "❌ " + (r.message || r.error || "실패");
+    return;
+  }
+  st.textContent = "✅ " + r.name + " 연결 완료 · 모델: " + r.model +
+    (r.count ? " · 선택 가능 " + r.count + "개" : "") +
+    "\n지금 바로 대화할 수 있습니다." + (r.note ? "\n" + r.note : "");
+  $("quickKey").value = "";
+  state.config = await api("/api/config");
+  fillSettings(state.config);
+  renderQuickModels(r.models, r.model);
+}
+
+async function quickApplyModel() {
+  const model = $("quickModel").value;
+  if (!model) return;
+  const st = $("quickStatus");
+  st.textContent = "적용 중…";
+  const r = await post("/api/llm/use-model", { model })
+    .catch(e => ({ ok: false, error: e.message }));
+  if (!r.ok) { st.textContent = "❌ " + (r.error || "실패"); return; }
+  st.textContent = "✅ 모델 적용: " + model + "  (바로 사용)";
+  state.config = await api("/api/config");
+  fillSettings(state.config);
+}
+
+async function loadQuickModels() {
+  const box = $("quickPick");
+  if ($("provider").value !== "openai") { if (box) box.style.display = "none"; return; }
+  const base = $("openai_base_url").value.trim();
+  if (!base) return;
+  const r = await post("/api/llm/api-models", {
+    base_url: base, api_key: $("openai_api_key").value.trim(),
+    preset: presetIdForBase(base)
+  }).catch(() => null);
+  if (!r || !r.ok) return;
+  renderQuickModels(r.models, $("openai_model").value);
+}
+
+function apiRow(p) {
+  p = p || {};
+  const d = document.createElement("div");
+  d.className = "srvRow api";
+  d.dataset.pid = p.id || "custom";
+  d.innerHTML =
+    "<input type='text' class='a-name' placeholder='이름' value='" + esc(p.name || "") + "'>" +
+    "<input type='text' class='a-url' placeholder='https://api.../v1' value='" + esc(p.base_url || "") + "'>" +
+    "<input type='password' class='a-key' placeholder='API 키' value='" + esc(p.api_key || "") + "'>" +
+    "<button class='a-use miniBtn'>사용</button>" +
+    "<button class='a-test miniBtn'>확인</button>" +
+    "<button class='a-del miniBtn danger' title='삭제'>✕</button>";
+  d.querySelector(".a-use").onclick = () => useApiPreset(d);
+  d.querySelector(".a-test").onclick = async () => {
+    const st = $("apiStatus");
+    st.textContent = "확인 중… " + d.querySelector(".a-url").value.trim();
+    const r = await post("/api/llm/api-models", {
+      base_url: d.querySelector(".a-url").value.trim(),
+      api_key: d.querySelector(".a-key").value.trim(),
+      preset: d.dataset.pid || ""
+    }).catch(e => ({ ok: false, error: e.message }));
+    st.textContent = r.ok
+      ? "✅ 연결 성공 · 모델 " + r.models.length + "개\n" + (r.note || "")
+      : "❌ " + (r.error || "실패");
+  };
+  d.querySelector(".a-del").onclick = () => d.remove();
+  return d;
+}
+function renderApiList(list) {
+  const box = $("apiList");
+  if (!box) return;
+  box.innerHTML = "";
+  (list || []).forEach(p => box.appendChild(apiRow(p)));
+  if (!(list || []).length) {
+    const h = document.createElement("div");
+    h.className = "hint";
+    h.textContent = "저장된 API 서비스가 없습니다. 위에서 서비스를 골라 [+ 추가] 하세요.";
+    box.appendChild(h);
+  }
+}
+function collectApiPresets() {
+  const out = [];
+  document.querySelectorAll("#apiList .srvRow").forEach(d => {
+    const base = d.querySelector(".a-url").value.trim();
+    if (!base) return;
+    out.push({
+      id: d.dataset.pid || "custom",
+      name: d.querySelector(".a-name").value.trim() || base,
+      base_url: base,
+      api_key: d.querySelector(".a-key").value.trim(),
+      model: ""
+    });
+  });
+  return out;
+}
+function addApiPreset() {
+  const id = $("apiPresetSel").value;
+  const p = (state.presets || []).find(x => x.id === id);
+  if (!p) return;
+  $("apiList").appendChild(apiRow({
+    id: p.id, name: p.name, base_url: p.base_url || "", api_key: ""
+  }));
+  const box = $("apiStatus");
+  if (box) box.textContent = p.note ? (p.name + " — " + p.note) : (p.name + " 를 추가했습니다. API 키를 입력하세요.");
+}
+async function useApiPreset(d) {
+  const name = d.querySelector(".a-name").value.trim();
+  const base = d.querySelector(".a-url").value.trim();
+  const key = d.querySelector(".a-key").value.trim();
+  const pid = d.dataset.pid || "";
+  if (!base) { alert("Base URL 을 입력하세요."); return; }
+  if (!key && !pid.startsWith("lmstudio") && pid !== "vllm" && pid !== "llama_cpp"
+      && pid !== "oobabooga" && pid !== "ollama_openai") {
+    $("apiStatus").textContent = "API 키를 입력하세요.";
+    return;
+  }
+  const st = $("apiStatus");
+  st.textContent = "연결 확인 중… " + (name || base);
+  const r = await post("/api/llm/quick-connect", { key, preset: pid, base_url: base, name })
+    .catch(e => ({ ok: false, error: e.message }));
+  if (!r.ok) {
+    st.textContent = "❌ " + (r.message || r.error || "실패");
+    return;
+  }
+  st.textContent = "✅ 이 서비스를 사용합니다 · " + r.name + " · " + r.model +
+    (r.count ? " (모델 " + r.count + "개)" : "") + "\n바로 대화할 수 있습니다.";
+  state.config = await api("/api/config");
+  fillSettings(state.config);
+  renderQuickModels(r.models, r.model);
+}
+async function searchApiModels() {
+  const st = $("apiStatus");
+  const base = $("openai_base_url").value.trim();
+  if (!base) { st.textContent = "Base URL 을 입력하세요."; return; }
+  st.textContent = "모델 목록을 가져오는 중…";
+  const r = await post("/api/llm/api-models", {
+    base_url: base,
+    api_key: $("openai_api_key").value.trim(),
+    preset: presetIdForBase(base)
+  }).catch(e => ({ ok: false, error: e.message }));
+  if (!r.ok) { st.textContent = "❌ " + (r.error || "실패"); return; }
+  fillModelDatalist($("apiModelList"), r.models);
+  if (!$("openai_model").value && r.models.length) $("openai_model").value = r.models[0];
+  st.textContent = "✅ 모델 " + r.models.length + "개" +
+    (r.note ? "\n" + r.note : "") + "\n" + r.models.slice(0, 20).join(", ") +
+    (r.models.length > 20 ? " …" : "");
+}
+function openKeysPage() {
+  const base = $("openai_base_url").value.trim();
+  const p = (state.presets || []).find(x => x.id === presetIdForBase(base));
+  if (!p || !p.keys_url) {
+    $("apiStatus").textContent = "기본 제공 서비스에서만 키 발급 페이지를 열 수 있습니다.";
+    return;
+  }
+  window.open(p.keys_url, "_blank", "noopener");
+}
+
+/* ---- 모델 서버 (다른 PC의 Ollama) ---- */
+function renderServers(servers) {
+  const box = $("srvList");
+  if (!box) return;
+  box.innerHTML = "";
+  const active = ($("ollama_url").value || "").replace(/\/+$/, "");
+  (servers || []).forEach(s => {
+    const row = serverRow(s);
+    const u = (s.url || "").replace(/\/+$/, "");
+    if (u && u === active) row.classList.add("active");
+    box.appendChild(row);
+  });
+  if (!(servers || []).length) {
+    const h = document.createElement("div");
+    h.className = "hint";
+    h.textContent = "저장된 다른 PC가 없습니다. 아래에 주소를 추가하세요.";
+    box.appendChild(h);
+  }
+  refreshNetworkHint();
+}
+function serverRow(s) {
+  s = s || {};
+  const d = document.createElement("div");
+  d.className = "srvRow";
+  d.innerHTML =
+    "<input type='text' class='s-name' placeholder='이름' value='" + esc(s.name || "") + "'>" +
+    "<input type='text' class='s-url' placeholder='192.168.0.10:11434' value='" + esc(s.url || "") + "'>" +
+    "<button class='s-use miniBtn'>사용</button>" +
+    "<button class='s-test miniBtn'>확인</button>" +
+    "<button class='s-del miniBtn danger' title='삭제'>✕</button>";
+  d.querySelector(".s-use").onclick = () => useServer(d);
+  d.querySelector(".s-test").onclick = () => probeServer(d);
+  d.querySelector(".s-del").onclick = () => d.remove();
+  return d;
+}
+function collectServers() {
+  const out = [];
+  document.querySelectorAll("#srvList .srvRow").forEach((d, i) => {
+    const url = d.querySelector(".s-url").value.trim();
+    if (!url) return;
+    out.push({ id: "srv" + (i + 1),
+      name: d.querySelector(".s-name").value.trim() || url,
+      url });
+  });
+  return out;
+}
+function useServer(target) {
+  const url = typeof target === "string" ? target
+    : target.querySelector(".s-url").value.trim();
+  if (!url) { alert("서버 주소를 입력하세요."); return; }
+  $("ollama_url").value = url;
+  $("provider").value = "ollama";
+  toggleProvider();
+  const st = $("srvStatus");
+  st.textContent = "이 서버를 사용하도록 선택했습니다. [저장]을 누르면 적용됩니다.\n" + url;
+}
+async function probeServer(target) {
+  const url = typeof target === "string" ? target
+    : target.querySelector(".s-url").value.trim();
+  if (!url) { alert("서버 주소를 입력하세요."); return; }
+  const st = $("srvStatus");
+  st.textContent = "확인 중… " + url;
+  let r;
+  try { r = await post("/api/ollama/probe", { url }); }
+  catch (e) { st.textContent = "❌ " + e.message; return; }
+  if (!r.ok) { st.textContent = "❌ 연결 실패\n" + (r.error || ""); return; }
+  const names = (r.models || []).map(m => m.name).filter(Boolean);
+  st.textContent = "✅ 연결 성공 · " + r.url + " · v" + (r.version || "?") +
+    " · " + r.latency_ms + "ms · 모델 " + r.count + "개\n" +
+    (names.slice(0, 12).join(", ") || "(설치된 모델 없음)") +
+    (names.length > 12 ? " …" : "");
+  const list = $("modelList");
+  if (list) names.forEach(n => { const o = document.createElement("option"); o.value = n; list.appendChild(o); });
+}
+async function refreshNetworkHint() {
+  try {
+    const r = await api("/api/servers");
+    const hint = $("netHint");
+    if (!hint) return;
+    let s = "이 PC의 Ollama: " + (r.local || "-");
+    if (r.lan && r.lan.length) s += "\n다른 PC에서 이 PC로 접속할 주소: " + r.lan.join("  ");
+    s += "\n" + (r.hint || "");
+    hint.textContent = s;
+  } catch (e) { }
+}
+
+/* ---- 성능 / 자원 ---- */
+function renderPerf(sys, live) {
+  sys = sys || {}; live = live || {};
+  const tier = sys.tier || "-";
+  $("pfTier").textContent = (sys.tier_label || tier) + (sys.active ? " · 자동 적용" : "");
+  $("pfCpu").textContent = (sys.cpu || 0) + "코어";
+  $("pfMem").textContent = fmtMB(sys.mem_total_mb) + " (여유 " + fmtMB(sys.mem_avail_mb) + ")";
+  const g = sys.gpu || {};
+  $("pfGpu").textContent = g.ok
+    ? (g.name + " · " + Math.round(g.vram_used_mb || 0) + "/" + Math.round(g.vram_total_mb || 0) + "MB")
+    : (g.busy ? "확인 중…" : (g.note || "-"));
+  const pct = Number(sys.mem_percent || live.percent || 0);
+  const bar = $("pfMemBar");
+  bar.style.width = Math.max(0, Math.min(100, pct)) + "%";
+  bar.className = pct >= 90 ? "dead" : (pct >= 75 ? "warn" : "");
+  $("pfLive").textContent = "메모리 사용 " + pct + "% · 여유 "
+    + fmtMB(live.avail_mb || sys.mem_avail_mb) + " · 상태 "
+    + (live.pressure_label || "정상");
+  const applied = (sys.applied && Object.keys(sys.applied).length)
+    ? Object.keys(sys.applied).map(k => k + "=" + sys.applied[k]) : [];
+  $("pfApplied").textContent = applied.length
+    ? "자동 적용 중: " + applied.join(", ")
+    : "자동 조정된 항목이 없습니다.";
+}
+async function refreshResources(deep) {
+  if (state.resBusy) return;
+  state.resBusy = true;
+  try {
+    const r = await api("/api/resources");
+    state.sys = r;
+    setMemBadge(r.live || {});
+    if (deep) {
+      const base = (state.config && state.config._perf) || {};
+      renderPerf(Object.assign({}, base, {
+        tier: r.tier, mem_total_mb: (r.live || {}).total_mb,
+        mem_avail_mb: (r.live || {}).avail_mb,
+        mem_percent: (r.live || {}).percent, gpu: r.gpu,
+        applied: base.applied, active: (r.tier === "lite" || r.tier === "low")
+      }), r.live || {});
+      const cs = $("cleanupStatus");
+      if (cs) {
+        const running = (r.ollama || []).map(m => m.name).filter(Boolean);
+        cs.textContent = "프로세스 " + fmtMB(r.process_mb) +
+          " · 모델 " + (running.length ? running.join(", ") : "없음") +
+          (r.endpoint ? " · " + r.endpoint : "");
+      }
+    }
+  } catch (e) { } finally { state.resBusy = false; }
+}
+async function cleanupResources(unload) {
+  const st = $("cleanupStatus");
+  if (st) st.textContent = unload ? "모델을 내리고 자원을 회복하는 중…" : "자원을 회복하는 중…";
+  try {
+    const r = await post("/api/resources/cleanup", { unload: !!unload, trim: true });
+    if (!r.ok) { if (st) st.textContent = "실패: " + (r.error || ""); return; }
+    const un = (r.ollama && r.ollama.unloaded) || [];
+    if (st) st.textContent = "✅ " + (r.at || "") + "\n" +
+      "프로세스 " + fmtMB(r.process_before_mb) + " → " + fmtMB(r.process_after_mb) +
+      " (회수 " + fmtMB(r.process_freed_mb) + ")\n" +
+      "모델 " + (un.length ? un.join(", ") + " 내림" : "내릴 모델 없음") +
+      ((r.ollama && r.ollama.freed_mb) ? " · 약 " + fmtMB(r.ollama.freed_mb) : "");
+    refreshResources(true);
+  } catch (e) {
+    if (st) st.textContent = "오류: " + e.message;
+  }
+}
+async function unloadModelsOnly() {
+  const st = $("cleanupStatus");
+  if (st) st.textContent = "모델을 메모리/VRAM에서 내리는 중…";
+  try {
+    const r = await post("/api/ollama/unload", {});
+    if (st) st.textContent = r.ok
+      ? "✅ " + ((r.unloaded || []).join(", ") || "내릴 모델 없음") +
+        (r.freed_mb ? " · 약 " + fmtMB(r.freed_mb) : "")
+      : "실패: " + (r.error || "");
+    refreshResources(true);
+  } catch (e) { if (st) st.textContent = "오류: " + e.message; }
+}
+
+/* ---- MCP ---- */
+function renderMcpEditor(servers) {
+  const box = $("mcpEditor"); box.innerHTML = "";
+  (servers || []).forEach(s => box.appendChild(mcpRow(s)));
+}
+function mcpRow(s) {
+  const d = document.createElement("div");
+  d.className = "mcpItem";
+  d.innerHTML =
+    '<div class="top">' +
+    '<input type="text" class="m-name" placeholder="이름 (예: filesystem)" value="' + esc(s.name || "") + '">' +
+    '<label class="chk" style="margin:0"><input type="checkbox" class="m-on"' + (s.enabled === false ? "" : " checked") + '> 사용</label>' +
+    '<button class="danger m-del">삭제</button></div>' +
+    '<div class="field" style="margin:0 0 8px"><label>실행 명령</label>' +
+    '<input type="text" class="m-cmd" placeholder="npx" value="' + esc(s.command || "") + '"></div>' +
+    '<div class="field" style="margin:0 0 8px"><label>인자 (한 줄에 하나)</label>' +
+    '<textarea class="m-args" style="min-height:60px">' + esc((s.args || []).join("\n")) + "</textarea></div>" +
+    '<div class="field" style="margin:0"><label>환경변수 (JSON, 선택)</label>' +
+    '<textarea class="m-env" style="min-height:46px">' + esc(JSON.stringify(s.env || {})) + "</textarea></div>";
+  d.querySelector(".m-del").onclick = () => d.remove();
+  return d;
+}
+function collectMcp() {
+  const out = [];
+  document.querySelectorAll("#mcpEditor .mcpItem").forEach(d => {
+    const name = d.querySelector(".m-name").value.trim();
+    if (!name) return;
+    let env = {};
+    try { env = JSON.parse(d.querySelector(".m-env").value || "{}"); } catch (e) { }
+    out.push({
+      name,
+      command: d.querySelector(".m-cmd").value.trim(),
+      args: d.querySelector(".m-args").value.split("\n").map(x => x.trim()).filter(Boolean),
+      env, enabled: d.querySelector(".m-on").checked
+    });
+  });
+  return out;
+}
+async function loadMcp() {
+  const r = await api("/api/mcp");
+  const box = $("mcpStatus"); box.innerHTML = "";
+  (r.servers || []).forEach(s => {
+    const d = document.createElement("div"); d.className = "it";
+    d.innerHTML = '<span class="pill ' + (s.alive ? "on" : "off") + '">' +
+      (s.alive ? "연결" : "오류") + '</span><span class="grow">' + esc(s.name) +
+      ' — 도구 ' + s.tool_count + '개' + (s.error ? " · " + esc(s.error) : "") + "</span>";
+    box.appendChild(d);
+  });
+  if (!(r.servers || []).length) box.innerHTML = '<div class="it">등록된 서버 없음</div>';
+}
+async function reloadMcp() {
+  $("mcpStatus").innerHTML = '<div class="it">연결 중… (npx 최초 실행은 오래 걸릴 수 있습니다)</div>';
+  await post("/api/mcp/reload", {});
+  await loadMcp();
+  alert("MCP 연결을 다시 시도했습니다.");
+}
+
+/* ---- 규칙 ---- */
+async function loadRules() {
+  const r = await api("/api/rules");
+  $("rulesPath").textContent = "경로: " + r.path + (r.exists ? " (있음)" : " (없음 — 저장하면 생성)");
+  $("rulesContent").value = r.content || "";
+}
+async function saveRules() {
+  const r = await post("/api/rules", { content: $("rulesContent").value });
+  const st = $("rulesStatus");
+  st.className = "status " + (r.ok ? "ok" : "err");
+  st.textContent = r.ok ? "저장됨: " + r.path : "실패: " + r.error;
+  loadRules();
+}
+
+/* ---- Ollama ---- */
+async function openOllama() {
+  $("ollamaOverlay").classList.add("show");
+  await refreshOllama();
+}
+async function refreshOllama() {
+  const r = await api("/api/ollama");
+  const box = $("ollamaList"); box.innerHTML = "";
+  if (!r.ok) { box.innerHTML = '<div class="it">' + esc(r.error) + "</div>"; return; }
+  (r.models || []).forEach(m => {
+    const d = document.createElement("div"); d.className = "it";
+    d.innerHTML = '<span class="grow">' + esc(m.name) + ' <span class="sub">' +
+      fmtSize(m.size) + (m.params ? " · " + m.params : "") + "</span></span>";
+    const use = document.createElement("button"); use.textContent = "사용";
+    use.onclick = () => { $("ollama_model").value = m.name; };
+    const del = document.createElement("button"); del.className = "danger"; del.textContent = "삭제";
+    del.onclick = async () => {
+      if (!confirm(m.name + " 모델을 삭제할까요?")) return;
+      const x = await post("/api/ollama/delete", { model: m.name });
+      if (!x.ok) alert(x.error);
+      refreshOllama();
+    };
+    d.appendChild(use); d.appendChild(del); box.appendChild(d);
+  });
+  if (!(r.models || []).length) box.innerHTML = '<div class="it">설치된 모델이 없습니다.</div>';
+}
+async function pullModel() {
+  const model = $("pullName").value.trim();
+  if (!model) return;
+  $("pullBtn").disabled = true;
+  $("pullStatus").textContent = "다운로드 시작…";
+  const res = await fetch("/api/ollama/pull", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model })
+  });
+  const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = "";
+  while (true) {
+    const { value, done } = await reader.read(); if (done) break;
+    buf += dec.decode(value, { stream: true });
+    const parts = buf.split("\n\n"); buf = parts.pop();
+    for (const p of parts) {
+      const line = p.trim(); if (!line.startsWith("data:")) continue;
+      let d; try { d = JSON.parse(line.slice(5).trim()); } catch (e) { continue; }
+      if (d.type === "progress") {
+        $("pullBar").style.width = (d.percent || 0) + "%";
+        $("pullStatus").textContent = (d.status || "") + " " + (d.percent || 0) + "%";
+      }
+      if (d.type === "error") $("pullStatus").textContent = d.message;
+    }
+  }
+  $("pullBtn").disabled = false;
+  $("pullStatus").textContent = "완료";
+  refreshOllama();
+}
+
+/* ---- 백업 ---- */
+async function openBackups() {
+  $("backupOverlay").classList.add("show");
+  const r = await api("/api/backups");
+  const box = $("backupList"); box.innerHTML = "";
+  (r.backups || []).forEach(b => {
+    const d = document.createElement("div"); d.className = "it";
+    d.innerHTML = '<span class="grow">' + esc(b.name) + '<div class="sub">' +
+      esc(b.path) + " · " + fmtTime(b.ts) + " · " + fmtSize(b.size) + "</div></span>";
+    const re = document.createElement("button"); re.textContent = "되돌리기";
+    re.onclick = async () => {
+      if (!confirm("이 파일을 백업 시점으로 되돌릴까요?\n" + b.path)) return;
+      const x = await post("/api/backups/" + b.id + "/restore", {});
+      alert(x.message);
+      openBackups();
+    };
+    const del = document.createElement("button"); del.className = "danger"; del.textContent = "삭제";
+    del.onclick = async () => { await fetch("/api/backups/" + b.id, { method: "DELETE" }); openBackups(); };
+    d.appendChild(re); d.appendChild(del); box.appendChild(d);
+  });
+  if (!(r.backups || []).length) box.innerHTML = '<div class="it">백업이 없습니다.</div>';
+  loadCheckpoints();
+}
+
+/* ---- 체크포인트 (git 되돌리기) ---- */
+async function loadCheckpoints() {
+  const box = $("ckptList"), st = $("ckptStatus");
+  box.innerHTML = '<div class="it">불러오는 중…</div>';
+  let r;
+  try { r = await api("/api/checkpoints"); } catch (e) { box.innerHTML = ""; return; }
+  const s = r.status || {};
+  if (!s.available) {
+    st.textContent = "git 이 설치되어 있지 않아 전체 되돌리기를 쓸 수 없습니다(파일 백업은 동작합니다).";
+  } else if (!s.enabled) {
+    st.textContent = "설정 → 성능/자원 에서 'git 되돌리기'를 켜면 실행 전 상태를 통째로 저장합니다.";
+  } else {
+    st.textContent = "작업 폴더: " + (s.workspace || "-") + (s.count ? " · 저장된 지점 " + s.count + "개" : "");
+  }
+  box.innerHTML = "";
+  (r.checkpoints || []).forEach(c => {
+    const d = document.createElement("div"); d.className = "it";
+    d.innerHTML = '<span class="grow"><b>' + esc(c.short) + "</b> " + esc(c.label) +
+      '<div class="sub">' + fmtTime(c.ts) + "</div></span>";
+    const re = document.createElement("button"); re.textContent = "이 지점으로";
+    re.onclick = async () => {
+      if (!confirm("작업 폴더를 이 지점(" + c.short + ") 상태로 되돌릴까요?\n" +
+        "그 뒤 에이전트가 만든 파일은 삭제됩니다. (되돌리기 직전 상태도 저장됩니다)")) return;
+      const x = await post("/api/checkpoints/restore", { sha: c.sha });
+      alert(x.message || (x.ok ? "완료" : "실패"));
+      openBackups();
+    };
+    d.appendChild(re); box.appendChild(d);
+  });
+  if (!(r.checkpoints || []).length) {
+    box.innerHTML = '<div class="it">' + (s.enabled ? "저장된 지점이 없습니다." :
+      "체크포인트를 쓰려면 설정에서 켜세요.") + "</div>";
+  }
+}
+
+/* ---- 도구 ---- */
+async function openTools() {
+  $("toolsOverlay").classList.add("show");
+  const r = await api("/api/tools");
+  const box = $("toolsList"); box.innerHTML = "";
+  const head = document.createElement("div"); head.className = "it";
+  head.innerHTML = "<span class='grow'><b>현재 에이전트: " + esc(r.agent || "-") +
+    "</b><div class='sub'>설정 → 에이전트에서 바꿀 수 있습니다. ⛔ 는 이 에이전트가 쓸 수 없는 도구입니다.</div></span>";
+  box.appendChild(head);
+  (r.tools || []).forEach(t => {
+    const d = document.createElement("div"); d.className = "it";
+    d.innerHTML = '<span class="grow"><b>' + esc(t.name) + '</b>' + (t.allowed === false ? " ⛔" : "") +
+      '<div class="sub">' + esc(t.description) + '</div></span><span class="pill">' + esc(t.server) + "</span>";
+    box.appendChild(d);
+  });
+}
+
+/* ============================ 스킬 ============================ */
+async function loadSkills() {
+  let r;
+  try { r = await api("/api/skills"); } catch (e) { return; }
+  state.skills = r.skills || [];
+  $("skillsDir").textContent = "폴더: " + (r.dir || "-");
+  $("skills_enabled").checked = r.enabled !== false;
+  const box = $("skillsList"); box.innerHTML = "";
+  if (!state.skills.length) {
+    box.innerHTML = "<div class='it'><span class='grow'>스킬이 없습니다. '+ 새 스킬' 로 만드세요.</span></div>";
+    return;
+  }
+  state.skills.forEach(s => {
+    const d = document.createElement("div"); d.className = "it";
+    d.innerHTML = "<span class='grow'><b>" + esc(s.id) + "</b> — " + esc(s.name) +
+      "<div class='sub'>" + esc(s.description || "(설명 없음)") +
+      " · 참고파일 " + ((s.resources || []).length) + "개</div></span>" +
+      "<span class='pill " + (s.enabled ? "on" : "off") + "'>" + (s.enabled ? "사용" : "중지") + "</span>";
+    const use = document.createElement("button"); use.className = "badgeBtn"; use.textContent = "사용";
+    use.onclick = () => {
+      $("setOverlay").classList.remove("show");
+      $("prompt").value = "/" + s.id + " "; $("prompt").focus(); autoGrow();
+    };
+    const tog = document.createElement("button"); tog.className = "badgeBtn";
+    tog.textContent = s.enabled ? "중지" : "켜기";
+    tog.onclick = async () => {
+      await post("/api/skills/" + encodeURIComponent(s.id) + "/toggle", { enabled: !s.enabled });
+      loadSkills(); loadSlash();
+    };
+    const ed = document.createElement("button"); ed.className = "badgeBtn"; ed.textContent = "편집";
+    ed.onclick = () => openSkillEditor(s.id);
+    d.appendChild(use); d.appendChild(tog); d.appendChild(ed);
+    box.appendChild(d);
+  });
+}
+async function openSkillEditor(sid) {
+  let s = { id: "", name: "", description: "", body: "", resources: [] };
+  if (sid) {
+    try { const r = await api("/api/skills/" + encodeURIComponent(sid)); if (r && r.id) s = r; } catch (e) { }
+  }
+  state.editingSkill = sid || null;
+  $("sk_id").value = s.id || ""; $("sk_id").disabled = !!sid;
+  $("sk_name").value = s.name || "";
+  $("sk_desc").value = s.description || "";
+  $("sk_body").value = s.body || "";
+  const res = (s.resources || []).map(x => x.path).join(", ");
+  $("sk_res").textContent = "참고 파일: " + (res || "없음 — 스킬 폴더에 파일을 넣으면 에이전트가 resource 인자로 읽습니다");
+  $("sk_del").style.display = sid ? "" : "none";
+  $("sk_status").className = "status";
+  $("sk_status").textContent = s.dir ? "폴더: " + s.dir : "";
+  $("skillOverlay").classList.add("show");
+}
+async function saveSkill() {
+  const st = $("sk_status");
+  const r = await post("/api/skills", {
+    id: $("sk_id").value.trim(), name: $("sk_name").value.trim(),
+    description: $("sk_desc").value.trim(), body: $("sk_body").value
+  });
+  if (!r.ok) { st.className = "status err"; st.textContent = "실패: " + r.error; return; }
+  $("skillOverlay").classList.remove("show");
+  loadSkills(); loadSlash();
+}
+async function deleteSkill() {
+  const sid = state.editingSkill;
+  if (!sid || !confirm("'" + sid + "' 스킬을 삭제할까요?")) return;
+  await fetch("/api/skills/" + encodeURIComponent(sid), { method: "DELETE" });
+  $("skillOverlay").classList.remove("show");
+  loadSkills(); loadSlash();
+}
+
+/* ============================ 에이전트 ============================ */
+async function loadAgents() {
+  try { const r = await api("/api/agents"); state.agents = r.agents || []; } catch (e) { }
+  renderAgentLists();
+}
+function renderAgentLists() {
+  const cur = cleanCfg(state.config).agent || "build";
+  const pick = $("agentPick");
+  pick.innerHTML = "";
+  state.agents.filter(a => a.mode === "primary" || a.mode === "all").forEach(a => {
+    const o = document.createElement("option"); o.value = a.id;
+    o.textContent = "🤖 " + a.id + (a.mode === "all" ? "" : "");
+    o.title = a.description || "";
+    pick.appendChild(o);
+  });
+  if (!Array.from(pick.options).some(o => o.value === cur)) {
+    const o = document.createElement("option"); o.value = cur; o.textContent = "🤖 " + cur; pick.appendChild(o);
+  }
+  pick.value = cur;
+
+  const sub = $("subagent_type"); const curSub = cleanCfg(state.config).subagent_type || "general";
+  sub.innerHTML = "";
+  state.agents.filter(a => a.mode === "subagent" || a.mode === "all").forEach(a => {
+    const o = document.createElement("option"); o.value = a.id;
+    o.textContent = a.id + (a.description ? " — " + a.description : "");
+    sub.appendChild(o);
+  });
+  if (!Array.from(sub.options).some(o => o.value === curSub)) {
+    const o = document.createElement("option"); o.value = curSub; o.textContent = curSub; sub.appendChild(o);
+  }
+  sub.value = curSub;
+
+  const box = $("agentsList"); box.innerHTML = "";
+  state.agents.forEach(a => {
+    const d = document.createElement("div"); d.className = "it";
+    const nTools = a.tools === "*" ? "전체" : ((a.tools || []).length + "개");
+    d.innerHTML = "<span class='grow'><b>" + esc(a.id) + "</b> <span class='pill'>" + esc(a.mode) +
+      "</span>" + (a.builtin ? " <span class='pill'>내장</span>" : "") +
+      "<div class='sub'>" + esc(a.description || "") + " · 도구 " + esc(nTools) + "</div></span>";
+    const use = document.createElement("button"); use.className = "badgeBtn";
+    use.textContent = (cur === a.id) ? "사용 중" : "이 에이전트로";
+    use.onclick = () => setAgent(a.id);
+    const ed = document.createElement("button"); ed.className = "badgeBtn"; ed.textContent = "편집";
+    ed.onclick = () => openAgentEditor(a.id);
+    d.appendChild(use); d.appendChild(ed);
+    box.appendChild(d);
+  });
+}
+async function setAgent(id) {
+  state.config.agent = id;
+  try { state.config = await post("/api/config", cleanCfg(state.config)); } catch (e) { }
+  state.meta = state.config._meta || state.meta;
+  renderAgentLists();
+  loadSlash();
+}
+async function openAgentEditor(aid) {
+  let a = { id: "", description: "", mode: "primary", tools: "*", body: "", temperature: null };
+  if (aid) {
+    try { const r = await api("/api/agents/" + encodeURIComponent(aid)); if (r && r.id) a = r; } catch (e) { }
+  }
+  state.editingAgent = aid || null;
+  $("ag_id").value = a.id || ""; $("ag_id").disabled = !!aid;
+  $("ag_desc").value = a.description || "";
+  $("ag_mode").value = (a.mode === "all" ? "all" : (a.mode || "primary"));
+  $("ag_body").value = a.body || "";
+  $("ag_temp").value = (a.temperature === null || a.temperature === undefined) ? "" : a.temperature;
+  const all = a.tools === "*";
+  $("ag_all").checked = all;
+  renderAgentToolBox(all ? [] : (a.tools || []));
+  $("ag_del").style.display = aid ? "" : "none";
+  const st = $("ag_status"); st.className = "status";
+  st.textContent = a.builtin ? "내장 에이전트 — 저장하면 같은 이름의 파일로 덮어씁니다."
+    : (a.path ? "파일: " + a.path : "");
+  $("agentEditOverlay").classList.add("show");
+}
+function renderAgentToolBox(selected) {
+  const box = $("ag_tools"); box.innerHTML = "";
+  const sel = new Set(selected || []);
+  (state.allTools || []).forEach(n => {
+    const lab = document.createElement("label");
+    lab.className = "chk"; lab.style.margin = "0";
+    lab.innerHTML = "<input type='checkbox' value='" + esc(n) + "'" + (sel.has(n) ? " checked" : "") +
+      "><span style='font-size:12px'>" + esc(n) + "</span>";
+    box.appendChild(lab);
+  });
+}
+async function saveAgent() {
+  const st = $("ag_status");
+  const all = $("ag_all").checked;
+  const tools = all ? "*" : Array.from($("ag_tools").querySelectorAll("input:checked")).map(i => i.value);
+  const r = await post("/api/agents", {
+    id: $("ag_id").value.trim(), description: $("ag_desc").value.trim(),
+    mode: $("ag_mode").value, tools, body: $("ag_body").value,
+    temperature: $("ag_temp").value.trim() || null
+  });
+  if (!r.ok) { st.className = "status err"; st.textContent = "실패: " + r.error; return; }
+  $("agentEditOverlay").classList.remove("show");
+  loadAgents();
+}
+async function deleteAgent() {
+  const aid = state.editingAgent;
+  if (!aid || !confirm("'" + aid + "' 에이전트 정의를 삭제할까요? (내장이면 기본값으로 돌아갑니다)")) return;
+  await fetch("/api/agents/" + encodeURIComponent(aid), { method: "DELETE" });
+  $("agentEditOverlay").classList.remove("show");
+  loadAgents(); loadToolsMeta();
+}
+
+/* ============================ 명령 ============================ */
+async function loadCmds() {
+  let r;
+  try { r = await api("/api/commands"); } catch (e) { return; }
+  state.commands = r.commands || [];
+  const box = $("cmdsList"); box.innerHTML = "";
+  state.commands.forEach(c => {
+    const d = document.createElement("div"); d.className = "it";
+    d.innerHTML = "<span class='grow'><b>/" + esc(c.id) + "</b>" +
+      (c.builtin ? " <span class='pill'>내장</span>" : "") +
+      "<div class='sub'>" + esc(c.description || "") + "</div></span>";
+    const use = document.createElement("button"); use.className = "badgeBtn"; use.textContent = "사용";
+    use.onclick = () => {
+      $("setOverlay").classList.remove("show");
+      $("prompt").value = "/" + c.id + " "; $("prompt").focus(); autoGrow();
+    };
+    d.appendChild(use);
+    if (!c.builtin) {
+      const ed = document.createElement("button"); ed.className = "badgeBtn"; ed.textContent = "편집";
+      ed.onclick = () => openCmdEditor(c.id);
+      d.appendChild(ed);
+    }
+    box.appendChild(d);
+  });
+}
+async function openCmdEditor(cid) {
+  let c = { id: "", description: "", body: "" };
+  if (cid) c = state.commands.find(x => x.id === cid) || c;
+  state.editingCmd = cid || null;
+  $("cm_id").value = c.id || ""; $("cm_id").disabled = !!cid;
+  $("cm_desc").value = c.description || "";
+  $("cm_body").value = c.body || "";
+  $("cm_del").style.display = cid ? "" : "none";
+  $("cm_status").className = "status"; $("cm_status").textContent = "";
+  $("cmdOverlay").classList.add("show");
+}
+async function saveCmd() {
+  const st = $("cm_status");
+  const r = await post("/api/commands", {
+    id: $("cm_id").value.trim(), description: $("cm_desc").value.trim(), body: $("cm_body").value
+  });
+  if (!r.ok) { st.className = "status err"; st.textContent = "실패: " + r.error; return; }
+  $("cmdOverlay").classList.remove("show");
+  loadCmds(); loadSlash();
+}
+async function deleteCmd() {
+  const cid = state.editingCmd;
+  if (!cid || !confirm("'/" + cid + "' 명령을 삭제할까요?")) return;
+  await fetch("/api/commands/" + encodeURIComponent(cid), { method: "DELETE" });
+  $("cmdOverlay").classList.remove("show");
+  loadCmds(); loadSlash();
+}
+
+/* ============================ / 자동완성 ============================ */
+async function loadToolsMeta() {
+  try {
+    const r = await api("/api/tools");
+    state.allTools = (r.tools || []).map(t => t.name);
+    ensureToolNames();
+  } catch (e) { }
+}
+async function loadSlash() {
+  try { const r = await api("/api/slash"); state.slashItems = r.items || []; }
+  catch (e) { state.slashItems = []; }
+}
+function hideSlash() {
+  $("slashMenu").style.display = "none";
+  state.slashOpen = false; state.slashIdx = -1; state.slashMatches = [];
+}
+function slashVisible() { return $("slashMenu").style.display !== "none"; }
+function updateSlashMenu() {
+  const v = $("prompt").value;
+  const first = v.split("\n")[0];
+  if (!v.startsWith("/") || first.includes(" ") || !state.slashItems.length) return hideSlash();
+  const q = first.slice(1).toLowerCase();
+  const items = state.slashItems.filter(i => !q || String(i.id).toLowerCase().includes(q));
+  if (!items.length) return hideSlash();
+  state.slashMatches = items;
+  if (state.slashIdx < 0 || state.slashIdx >= items.length) state.slashIdx = 0;
+  const m = $("slashMenu"); m.innerHTML = "";
+  items.forEach((it, i) => {
+    const d = document.createElement("div");
+    d.className = "it" + (i === state.slashIdx ? " on" : "");
+    d.innerHTML = "<b>/" + esc(it.id) + "</b><span class='sub'>" + esc(it.description || "") +
+      "</span><span class='tag'>" + (it.kind === "skill" ? "스킬" : (it.builtin ? "내장 명령" : "명령")) + "</span>";
+    d.onmousedown = e => { e.preventDefault(); pickSlash(i); };
+    m.appendChild(d);
+  });
+  m.style.display = "";
+  state.slashOpen = true;
+}
+function moveSlash(d) {
+  if (!state.slashMatches || !state.slashMatches.length) return;
+  state.slashIdx = (state.slashIdx + d + state.slashMatches.length) % state.slashMatches.length;
+  Array.from($("slashMenu").children).forEach((el, i) => el.classList.toggle("on", i === state.slashIdx));
+}
+function pickSlash(i) {
+  if (i === undefined || i === null) i = state.slashIdx;
+  const it = (state.slashMatches || [])[i];
+  if (!it) return;
+  $("prompt").value = "/" + it.id + " ";
+  hideSlash(); autoGrow(); $("prompt").focus();
+}
+function slashQuery() {
+  const v = $("prompt").value;
+  const first = v.split("\n")[0];
+  return (v.startsWith("/") && !first.includes(" ")) ? first.slice(1).toLowerCase() : null;
+}
+
+/* ============================ 초기화 ============================ */
+
+/* ---- 폴더 선택 ---- */
+async function fsOpen(p) {
+  const r = await api("/api/fs" + (p ? "?path=" + encodeURIComponent(p) : ""));
+  if (r.error) { alert(r.error); return; }
+  $("fsPath").value = r.path || "";
+  const box = $("fsList"); box.innerHTML = ""; box.dataset.cur = r.path || "";
+  if (r.parent) {
+    const d = document.createElement("div"); d.className = "it"; d.innerHTML = "<span>⬆ 상위 폴더</span>";
+    d.onclick = () => fsOpen(r.parent); box.appendChild(d);
+  }
+  (r.dirs || []).forEach(dir => {
+    const d = document.createElement("div"); d.className = "it";
+    d.innerHTML = "<span>📁 " + esc(dir) + "</span>";
+    d.onclick = () => fsOpen(dir); box.appendChild(d);
+  });
+}
+
+/* ============================ 초기화 ============================ */
+function autoGrow() {
+  const t = $("prompt"); t.style.height = "auto";
+  t.style.height = Math.min(t.scrollHeight, 240) + "px";
+}
+function setTheme(t) {
+  document.documentElement.setAttribute("data-theme", t);
+  state.config.theme = t;
+}
+
+$("sendBtn").onclick = send;
+$("stopBtn").onclick = async () => {
+  try { await post("/api/stop", { session_id: state.currentId }); } catch (e) { }
+  if (state.controller) state.controller.abort();
+};
+$("prompt").addEventListener("keydown", e => {
+  if (slashVisible()) {
+    if (e.key === "ArrowDown") { e.preventDefault(); moveSlash(1); return; }
+    if (e.key === "ArrowUp") { e.preventDefault(); moveSlash(-1); return; }
+    if (e.key === "Tab") { e.preventDefault(); pickSlash(); return; }
+    if (e.key === "Escape") { e.preventDefault(); hideSlash(); return; }
+    if (e.key === "Enter" && !e.shiftKey) {
+      const it = (state.slashMatches || [])[state.slashIdx];
+      const q = slashQuery();
+      if (it && q !== null && it.id.toLowerCase() !== q) {
+        e.preventDefault(); pickSlash(); return;
+      }
+    }
+  }
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+});
+$("prompt").addEventListener("input", () => { autoGrow(); updateSlashMenu(); });
+$("agentPick").onchange = e => setAgent(e.target.value);
+$("skillNew").onclick = () => openSkillEditor(null);
+$("skillReload").onclick = loadSkills;
+$("sk_save").onclick = saveSkill;
+$("sk_del").onclick = deleteSkill;
+$("cmdNew").onclick = () => openCmdEditor(null);
+$("cmdReload").onclick = loadCmds;
+$("cm_save").onclick = saveCmd;
+$("cm_del").onclick = deleteCmd;
+$("agentNew").onclick = () => openAgentEditor(null);
+$("agentReload").onclick = loadAgents;
+$("ag_save").onclick = saveAgent;
+$("ag_del").onclick = deleteAgent;
+$("ag_all").onchange = () => {
+  const all = $("ag_all").checked;
+  $("ag_tools").style.opacity = all ? ".45" : "1";
+  $("ag_tools").querySelectorAll("input").forEach(i => { i.disabled = all; if (all) i.checked = false; });
+};
+$("permAddRule").onclick = () => { $("permRules").appendChild(permRuleRow({})); };
+$("setTabs").addEventListener("click", e => {
+  const p = e.target.dataset && e.target.dataset.preset;
+  if (!p) return;
+  const preset = (state.meta.presets || {})[p];
+  if (!preset) return;
+  renderPermKinds(preset);
+  state.config.permission_actions = preset;
+});
+$("newBtn").onclick = newSession;
+$("setBtn").onclick = async () => {
+  $("setOverlay").classList.add("show");
+  if (!state.config || !state.config.provider) {
+    try { await loadConfig(); } catch (e) { }
+  }
+  fillSettings(state.config);
+  switchTab("model");
+};
+$("backupBtn").onclick = openBackups;
+$("toolsBtn").onclick = openTools;
+$("importBtn").onclick = () => $("importInput").click();
+$("themeBtn").onclick = () => {
+  const t = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+  setTheme(t); post("/api/config", Object.assign({}, cleanCfg(state.config), { theme: t }))
+    .then(c => { state.config = c; state.meta = c._meta || state.meta; });
+};
+$("renameBtn").onclick = () => state.currentId && renameSession(state.currentId, $("title").textContent);
+$("exportBtn").onclick = exportSession;
+$("attachBtn").onclick = () => $("fileInput").click();
+$("fileInput").onchange = e => { onFiles(e.target.files); e.target.value = ""; };
+$("importInput").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  const text = await f.text();
+  const r = await post("/api/sessions/import", { data: text });
+  alert(r.ok ? "가져왔습니다: " + r.title : "실패: " + r.error);
+  if (r.ok) { loadSessions(); openSession(r.id); }
+  e.target.value = "";
+};
+$("apOnce").onclick = () => answerApproval("allow", false);
+$("apAlways").onclick = () => answerApproval("allow", true);
+$("apDeny").onclick = () => answerApproval("deny", false);
+$("sessSearch").addEventListener("input", e => loadSessions(e.target.value.trim()));
+$("provider").onchange = toggleProvider;
+$("setTabs").onclick = e => { if (e.target.dataset.tab) switchTab(e.target.dataset.tab); };
+document.querySelectorAll("[data-close]").forEach(b => b.onclick = () => $(b.dataset.close).classList.remove("show"));
+document.querySelectorAll(".overlay").forEach(o => o.addEventListener("click", e => {
+  if (e.target === o && o.id !== "apOverlay") o.classList.remove("show");
+}));
+$("saveBtn").onclick = saveSettings;
+$("testBtn").onclick = testConn;
+$("loadModelsBtn").onclick = loadModels;
+$("btnLocalScan").onclick = searchLocal;
+$("btnLanScan").onclick = searchLan;
+$("btnAddrProbe").onclick = probeAddress;
+$("apiPresetAdd").onclick = addApiPreset;
+$("btnApiModels").onclick = searchApiModels;
+$("btnApiTest").onclick = async () => { await searchApiModels(); };
+$("btnApiKeys").onclick = openKeysPage;
+$("quickBtn").onclick = quickConnect;
+$("quickApply").onclick = quickApplyModel;
+$("quickKey").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); quickConnect(); } });
+$("quickService").onchange = () => {
+  if ($("quickService").value === "custom") {
+    $("quickStatus").textContent = "직접 입력: 아래 Base URL 과 모델을 채운 뒤 [연결]을 누르세요.";
+    $("openai_base_url").focus();
+  } else {
+    $("quickStatus").textContent = "키를 붙여넣고 [연결]을 누르세요.";
+  }
+};
+$("ollamaBtn").onclick = openOllama;
+$("srvAdd").onclick = () => {
+  $("srvList").appendChild(serverRow({ name: $("srvName").value.trim(), url: $("srvUrl").value.trim() }));
+  $("srvName").value = ""; $("srvUrl").value = "";
+};
+$("srvLocal").onclick = () => useServer("127.0.0.1:11434");
+$("cleanupBtn").onclick = () => cleanupResources(true);
+$("unloadBtn").onclick = unloadModelsOnly;
+$("perfRefreshBtn").onclick = () => refreshResources(true);
+$("pullBtn").onclick = pullModel;
+$("mcpAdd").onclick = () => $("mcpEditor").appendChild(mcpRow({}));
+$("mcpReload").onclick = reloadMcp;
+$("rulesSave").onclick = saveRules;
+$("browseBtn").onclick = () => { $("fsOverlay").classList.add("show"); fsOpen($("workspace").value.trim()); };
+$("fsGo").onclick = () => fsOpen($("fsPath").value.trim());
+$("fsPick").onclick = () => { $("workspace").value = $("fsList").dataset.cur || ""; $("fsOverlay").classList.remove("show"); };
+$("backupClear").onclick = async () => {
+  if (!confirm("모든 파일 백업을 삭제할까요?")) return;
+  await fetch("/api/backups", { method: "DELETE" }); openBackups();
+};
+$("ckptMake").onclick = async () => {
+  const b = $("ckptMake"); b.disabled = true; b.textContent = "저장 중…";
+  try { await post("/api/checkpoints", {}); } catch (e) { }
+  b.disabled = false; b.textContent = "⏱ 지금 지점 저장";
+  openBackups();
+};
+$("ckptClear").onclick = async () => {
+  if (!confirm("이 작업 폴더의 체크포인트를 모두 삭제할까요?\n(작업 폴더의 파일은 그대로입니다)")) return;
+  await fetch("/api/checkpoints", { method: "DELETE" });
+  openBackups();
+};
+$("resetBtn").onclick = async () => {
+  if (!confirm("설정을 초기화할까요?")) return;
+  state.config = await post("/api/config/reset", {});
+  fillSettings(state.config); alert("초기화되었습니다.");
+};
+$("delAllSessions").onclick = async () => {
+  if (!confirm("모든 대화를 삭제할까요? 되돌릴 수 없습니다.")) return;
+  await fetch("/api/sessions", { method: "DELETE" });
+  newSession();
+};
+document.addEventListener("click", e => {
+  const cp = e.target.closest(".cp");
+  if (cp) {
+    const code = cp.closest(".codeWrap").querySelector("code").innerText;
+    navigator.clipboard.writeText(code);
+    cp.textContent = "복사됨!"; setTimeout(() => cp.textContent = "복사", 1200);
+  }
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") {
+    document.querySelectorAll(".overlay.show").forEach(o => {
+      if (o.id !== "apOverlay") o.classList.remove("show");
+    });
+  }
+  if (e.ctrlKey && e.key.toLowerCase() === "k") { e.preventDefault(); $("sessSearch").focus(); }
+});
+
+(async () => {
+  try {
+    await loadConfig();
+    setTheme(state.config.theme || "dark");
+    await loadSessions();
+    await Promise.all([loadAgents(), loadSlash(), loadToolsMeta()]);
+    $("prompt").focus();
+    refreshUsage();
+    setInterval(() => { if (!document.hidden) refreshResources(false); }, 30000);
+  } catch (e) {
+    document.body.innerHTML = "<pre style='padding:20px'>초기화 실패: " + esc(e.message) + "</pre>";
+  }
+})();
+</script>
+</body>
+</html>

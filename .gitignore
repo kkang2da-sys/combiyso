@@ -1,0 +1,24 @@
+# 빌드 산출물
+build/
+dist/
+installer/*.exe
+*.spec.bak
+
+# 가상환경 / 캐시
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# OS / 편집기
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# 개인 메모(내부 인수인계 문서는 공개 저장소에 올리지 않음)
+인수인계서.md
+
+# 로그
+*.log

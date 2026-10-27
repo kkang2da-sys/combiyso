@@ -1,0 +1,7 @@
+# 줄바꿈 규칙 (스크립트가 윈도우에서 CRLF 로 바뀌어 깨지지 않게)
+* text=auto
+*.sh   text eol=lf
+*.py   text eol=lf
+*.iss  text eol=crlf
+*.ps1  text eol=crlf
+*.yml  text eol=lf
