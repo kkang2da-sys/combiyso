@@ -1,4 +1,4 @@
-﻿# 컴비서(Combiyso) Windows 원클릭 설치 스크립트
+# 컴비서(Combiyso) Windows 원클릭 설치 스크립트
 #   사용법(PowerShell):
 #     irm https://raw.githubusercontent.com/kkang2da-sys/combiyso/main/install.ps1 | iex
 #   옵션:
@@ -49,7 +49,10 @@ try {
         Invoke-WebRequest -Uri $setup.browser_download_url -OutFile $file -UseBasicParsing -TimeoutSec 600
         Unblock-File $file -ErrorAction SilentlyContinue
         Write-Step "설치 중... (관리자 권한 불필요)"
-        $p = Start-Process -FilePath $file -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART" -Wait -PassThru
+        # 실행 중인 컴비서가 있으면 먼저 종료 (파일 잠금으로 설치가 취소되는 것을 방지)
+        Get-Process -Name "컴비서", "combiyso" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+        Start-Sleep -Milliseconds 900
+        $p = Start-Process -FilePath $file -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/FORCECLOSEAPPLICATIONS" -Wait -PassThru
         if ($p.ExitCode -ne 0) { throw "설치 프로그램이 코드 $($p.ExitCode) 로 종료되었습니다." }
         $dest = Join-Path $env:LOCALAPPDATA "Programs\Combiyso"
         $exe  = Join-Path $dest "컴비서.exe"
