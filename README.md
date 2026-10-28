@@ -79,6 +79,20 @@ curl -fsSL https://raw.githubusercontent.com/kkang2da-sys/combiyso/main/install.
 - 로컬 모델을 쓰려면 [Ollama](https://ollama.com/download) 설치를 권장합니다. (API 키만으로도 동작)
 - 설정·대화 기록은 OS 별 사용자 데이터 폴더에 저장되어 재설치해도 유지됩니다.
 
+### 제거 (macOS · Linux)
+
+앱만 지우기 (**설정·대화 기록은 유지**):
+```bash
+curl -fsSL https://raw.githubusercontent.com/kkang2da-sys/combiyso/main/uninstall.sh | bash
+```
+
+설정·대화 기록까지 **모두** 지우기:
+```bash
+curl -fsSL https://raw.githubusercontent.com/kkang2da-sys/combiyso/main/uninstall.sh | bash -s -- --purge
+```
+
+Windows 는 **설정 → 앱 → 컴비서 → 제거** (또는 `%LOCALAPPDATA%\Programs\Combiyso\unins000.exe`).
+
 ### 새 버전 배포 방법 (유지보수용)
 
 ```bash
