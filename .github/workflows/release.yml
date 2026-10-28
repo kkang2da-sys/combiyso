@@ -42,6 +42,27 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt pyinstaller
 
+      - name: macOS 아이콘(.icns) 준비
+        if: runner.os == 'macOS'
+        run: |
+          python -m pip install pillow
+          python - <<'PY'
+          from PIL import Image
+          import os
+          src = Image.open("assets/combiyso.ico").convert("RGBA")
+          os.makedirs("icon.iconset", exist_ok=True)
+          for name, px in [
+              ("icon_16x16.png", 16), ("icon_16x16@2x.png", 32),
+              ("icon_32x32.png", 32), ("icon_32x32@2x.png", 64),
+              ("icon_128x128.png", 128), ("icon_128x128@2x.png", 256),
+              ("icon_256x256.png", 256), ("icon_256x256@2x.png", 512),
+              ("icon_512x512.png", 512), ("icon_512x512@2x.png", 1024),
+          ]:
+              src.resize((px, px), Image.LANCZOS).save(os.path.join("icon.iconset", name))
+          PY
+          iconutil -c icns icon.iconset -o assets/combiyso.icns
+          ls -l assets/combiyso.icns
+
       - name: 빌드 (PyInstaller onedir)
         run: pyinstaller combiyso.spec --noconfirm
 
@@ -63,9 +84,22 @@ jobs:
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DMyAppVersion=$ver" "installer\combiyso.iss"
           Copy-Item "installer\컴비서설치.exe" "combiyso-windows-setup.exe"
 
-      # ---------- macOS / Linux ----------
-      - name: 패키지 (tar.gz)
-        if: runner.os != 'Windows'
+      # ---------- macOS ----------
+      - name: 패키지 (macOS .app)
+        if: runner.os == 'macOS'
+        run: |
+          ls -la dist
+          if [ -d "dist/컴비서.app" ]; then
+            tar -C dist -czf "combiyso-${{ matrix.asset }}.tar.gz" "컴비서.app"
+          else
+            chmod +x dist/combiyso/combiyso
+            tar -C dist -czf "combiyso-${{ matrix.asset }}.tar.gz" combiyso
+          fi
+          ls -lh "combiyso-${{ matrix.asset }}.tar.gz"
+
+      # ---------- Linux ----------
+      - name: 패키지 (Linux tar.gz)
+        if: runner.os == 'Linux'
         run: |
           chmod +x dist/combiyso/combiyso
           tar -C dist -czf "combiyso-${{ matrix.asset }}.tar.gz" combiyso

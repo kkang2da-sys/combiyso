@@ -14,7 +14,7 @@ from . import perf
 
 APP_NAME = "컴비서"
 APP_EN = "Combiyso"
-VERSION = "1.6.4"
+VERSION = "1.6.5"
 DATA_DIRNAME = "compbiyso"          # 데이터 폴더는 ASCII (인코딩 문제 방지)
 
 

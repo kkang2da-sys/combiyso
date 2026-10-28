@@ -2,7 +2,7 @@
 #define MyAppName "컴비서"
 #define MyAppNameEn "Combiyso"
 #ifndef MyAppVersion
-  #define MyAppVersion "1.6.4"
+  #define MyAppVersion "1.6.5"
 #endif
 #define MyAppPublisher "Combiyso"
 #define MyAppExeName "컴비서.exe"

@@ -1,13 +1,27 @@
 # -*- mode: python ; coding: utf-8 -*-
 """컴비서 PyInstaller 빌드 스펙 (onedir — 시작 빠르고 메모리 절약)."""
 import os
+import re
 import sys
 
 from PyInstaller.utils.hooks import collect_submodules
 
-# 윈도우는 .ico 를 쓰고, macOS/Linux 는 아이콘을 생략한다(.ico 는 macOS 에서 거부됨).
+# 윈도우는 .ico, macOS 는 .icns 를 쓴다(없으면 아이콘 생략).
 _ICON_WIN = os.path.join(SPECPATH, "assets", "combiyso.ico")
-ICON = _ICON_WIN if sys.platform.startswith("win") and os.path.exists(_ICON_WIN) else None
+_ICON_MAC = os.path.join(SPECPATH, "assets", "combiyso.icns")
+if sys.platform.startswith("win"):
+    ICON = _ICON_WIN if os.path.exists(_ICON_WIN) else None
+elif sys.platform == "darwin":
+    ICON = _ICON_MAC if os.path.exists(_ICON_MAC) else None
+else:
+    ICON = None
+
+_VER = "0.0.0"
+try:
+    _src = open(os.path.join(SPECPATH, "app", "config.py"), encoding="utf-8").read()
+    _VER = re.search(r'VERSION\s*=\s*"([^"]+)"', _src).group(1)
+except Exception:
+    pass
 
 try:
     _pypdf = collect_submodules("pypdf")      # 선택 의존성(PDF 텍스트 추출)
@@ -81,3 +95,22 @@ coll = COLLECT(
     upx_exclude=[],
     name="combiyso",
 )
+
+# macOS: 더블클릭으로 실행되는 진짜 .app 번들(아이콘·Dock·응용 프로그램 목록)
+if sys.platform == "darwin":
+    app = BUNDLE(
+        coll,
+        name="컴비서.app",
+        icon=ICON,
+        bundle_identifier="com.kkang2da.combiyso",
+        info_plist={
+            "CFBundleName": "컴비서",
+            "CFBundleDisplayName": "컴비서",
+            "CFBundleGetInfoString": f"컴비서 {_VER}",
+            "CFBundleShortVersionString": _VER,
+            "CFBundleVersion": _VER,
+            "NSHighResolutionCapable": True,
+            "LSMinimumSystemVersion": "11.0",
+            "LSApplicationCategoryType": "public.app-category.productivity",
+        },
+    )

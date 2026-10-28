@@ -1,4 +1,4 @@
-# 컴비서 (Combiyso) v1.6.4 — 완전판
+# 컴비서 (Combiyso) v1.6.5 — 완전판
 
 내 컴퓨터에서 **파일 정리 · 검색 · 편집 · 명령 실행 · 웹 검색**을 채팅으로 시키는
 **로컬 AI 에이전트**입니다.
@@ -45,6 +45,10 @@ v1.6.3 에서 추가된 것: **설정 보호** — `연결 테스트` API 에 �
 v1.6.4 에서 추가된 것: **UI 캐시 문제 해결** — `index.html` 을 `no-store` 로 보내고, 실행 시
 `?v=버전` 주소로 열어 브라우저에 남은 예전 화면이 뜨지 않습니다.
 
+v1.6.5 에서 추가된 것: **macOS 실제 앱(.app) · 앱 아이콘 · 바탕화면 바로가기** — 맥에서도
+터미널 스크립트가 아니라 **아이콘이 있는 앱**으로 설치되어 응용 프로그램/Launchpad/Dock 에서
+더블클릭으로 실행됩니다.
+
 ---
 
 ## 설치 (Windows · macOS · Linux)
@@ -67,7 +71,7 @@ curl -fsSL https://raw.githubusercontent.com/kkang2da-sys/combiyso/main/install.
 | OS | 설치 위치 | 실행 | 제거 |
 |---|---|---|---|
 | Windows 10/11 (x64) | `%LOCALAPPDATA%\Programs\Combiyso` | 바탕화면 · 시작메뉴 **컴비서** | 설정 → 앱 → 컴비서 |
-| macOS 12+ (Apple Silicon) | `~/Library/Application Support/Combiyso` | `~/Applications/컴비서.command` 또는 `combiyso` | 폴더 삭제 |
+| macOS 12+ (Apple Silicon) | `~/Applications/컴비서.app` | 아이콘 더블클릭 · Launchpad | `컴비서.app` 삭제 |
 | Linux (x86_64) | `~/.local/share/combiyso` | `combiyso` (앱 목록에 **컴비서**) | 폴더 삭제 |
 
 - 릴리스 페이지(수동 내려받기): <https://github.com/kkang2da-sys/combiyso/releases>

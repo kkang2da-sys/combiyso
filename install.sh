@@ -63,32 +63,55 @@ trap 'rm -rf "$TMP"' EXIT
 printf '  다운로드 중...\n'
 curl -fsSL --retry 3 "$URL" -o "$TMP/pkg.tar.gz" || die "다운로드 실패: $URL"
 tar -xzf "$TMP/pkg.tar.gz" -C "$TMP" || die "압축 해제 실패"
-[ -d "$TMP/combiyso" ] || die "패키지 구조가 예상과 다릅니다."
-chmod +x "$TMP/combiyso/combiyso" 2>/dev/null || true
+if [ ! -d "$TMP/combiyso" ] && [ -z "$(find "$TMP" -maxdepth 2 -name '*.app' -type d -print -quit)" ]; then
+  die "패키지 구조가 예상과 다릅니다."
+fi
+[ -d "$TMP/combiyso" ] && chmod +x "$TMP/combiyso/combiyso" 2>/dev/null || true
 
 mkdir -p "$HOME/.local/bin"
 
 if [ "$OS" = "Darwin" ]; then
-  # macOS: ~/Library/Application Support/Combiyso
-  PREFIX="$HOME/Library/Application Support/Combiyso"
-  mkdir -p "$PREFIX"
-  rm -rf "$PREFIX/app"
-  mv "$TMP/combiyso" "$PREFIX/app"
-  xattr -dr com.apple.quarantine "$PREFIX/app" 2>/dev/null || true
-  ln -sf "$PREFIX/app/combiyso" "$HOME/.local/bin/combiyso"
-
-  # Finder 에서 더블클릭할 수 있는 실행 파일(.command → Terminal)
   mkdir -p "$HOME/Applications"
-  LAUNCHER="$HOME/Applications/컴비서.command"
-  {
-    echo '#!/bin/bash'
-    echo "exec \"$PREFIX/app/combiyso\" \"\$@\""
-  } > "$LAUNCHER"
-  chmod +x "$LAUNCHER"
-  xattr -dr com.apple.quarantine "$LAUNCHER" 2>/dev/null || true
+  SRC_APP="$(find "$TMP" -maxdepth 2 -name '*.app' -type d -print -quit 2>/dev/null || true)"
 
-  ok "설치 완료: $PREFIX/app"
-  printf '  실행: ~/Applications/컴비서.command (더블클릭) 또는 combiyso\n'
+  if [ -n "$SRC_APP" ]; then
+    # 최신 패키지: 진짜 .app 번들 (아이콘 · Dock · 응용 프로그램 목록)
+    rm -rf "$HOME/Applications/컴비서.app"
+    cp -R "$SRC_APP" "$HOME/Applications/컴비서.app"
+    xattr -dr com.apple.quarantine "$HOME/Applications/컴비서.app" 2>/dev/null || true
+    ln -sf "$HOME/Applications/컴비서.app/Contents/MacOS/combiyso" "$HOME/.local/bin/combiyso"
+    rm -f "$HOME/Applications/컴비서.command"
+
+    # 바탕화면 바로가기(링크)
+    if [ -d "$HOME/Desktop" ]; then
+      ln -sfn "$HOME/Applications/컴비서.app" "$HOME/Desktop/컴비서.app" 2>/dev/null || true
+    fi
+
+    ok "설치 완료: $HOME/Applications/컴비서.app"
+    printf '  실행: 응용 프로그램 폴더(또는 바탕화면)의 "컴비서" 더블클릭\n'
+    printf '  종료: Dock 의 컴비서 아이콘 → 우클릭 → 종료\n'
+    RUN_TARGET="$HOME/Applications/컴비서.app"
+  else
+    # 예전 패키지(폴더형) 호환
+    PREFIX="$HOME/Library/Application Support/Combiyso"
+    mkdir -p "$PREFIX"
+    rm -rf "$PREFIX/app"
+    mv "$TMP/combiyso" "$PREFIX/app"
+    xattr -dr com.apple.quarantine "$PREFIX/app" 2>/dev/null || true
+    ln -sf "$PREFIX/app/combiyso" "$HOME/.local/bin/combiyso"
+
+    LAUNCHER="$HOME/Applications/컴비서.command"
+    {
+      echo '#!/bin/bash'
+      echo "exec \"$PREFIX/app/combiyso\" \"\$@\""
+    } > "$LAUNCHER"
+    chmod +x "$LAUNCHER"
+    xattr -dr com.apple.quarantine "$LAUNCHER" 2>/dev/null || true
+
+    ok "설치 완료: $PREFIX/app"
+    printf '  실행: ~/Applications/컴비서.command (더블클릭) 또는 combiyso\n'
+    RUN_TARGET="$LAUNCHER"
+  fi
 else
   # Linux: ~/.local/share/combiyso
   PREFIX="$HOME/.local/share/combiyso"
@@ -126,7 +149,7 @@ printf '\n'
 if [ "$RUN_AFTER" = "1" ]; then
   printf '  컴비서를 시작합니다...\n'
   if [ "$OS" = "Darwin" ]; then
-    open "$HOME/Applications/컴비서.command" 2>/dev/null || "$PREFIX/app/combiyso" &
+    open "${RUN_TARGET:-$HOME/Applications/컴비서.app}" 2>/dev/null || true
   else
     nohup "$PREFIX/app/combiyso" >/dev/null 2>&1 &
   fi
