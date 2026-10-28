@@ -90,6 +90,7 @@ if [ "$OS" = "Darwin" ]; then
     ok "설치 완료: $HOME/Applications/컴비서.app"
     printf '  실행: 응용 프로그램 폴더(또는 바탕화면)의 "컴비서" 더블클릭\n'
     printf '  종료: Dock 의 컴비서 아이콘 → 우클릭 → 종료\n'
+    printf '  (종료가 안 되면 터미널에서) pkill -f "Contents/MacOS/combiyso"\n'
     RUN_TARGET="$HOME/Applications/컴비서.app"
   else
     # 예전 패키지(폴더형) 호환

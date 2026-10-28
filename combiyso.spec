@@ -111,6 +111,8 @@ if sys.platform == "darwin":
             "CFBundleVersion": _VER,
             "NSHighResolutionCapable": True,
             "LSMinimumSystemVersion": "11.0",
+            "LSBackgroundOnly": False,
+            "LSUIElement": False,
             "LSApplicationCategoryType": "public.app-category.productivity",
         },
     )
