@@ -75,6 +75,19 @@ curl -fsSL https://raw.githubusercontent.com/kkang2da-sys/combiyso/main/install.
 - 로컬 모델을 쓰려면 [Ollama](https://ollama.com/download) 설치를 권장합니다. (API 키만으로도 동작)
 - 설정·대화 기록은 OS 별 사용자 데이터 폴더에 저장되어 재설치해도 유지됩니다.
 
+### 새 버전 배포 방법 (유지보수용)
+
+```bash
+# 1) app/config.py 의 VERSION, installer/combiyso.iss 의 기본 버전을 올린 뒤
+git add -A && git commit -m "v1.6.5"
+git tag v1.6.5
+git push origin main --tags
+```
+
+태그를 밀면 GitHub Actions(`.github/workflows/release.yml`)가
+**Windows(x64+설치팩) · macOS(arm64) · Linux(x64)** 를 자동 빌드해 릴리스에 첨부합니다.
+(약 5~8분 소요 · Windows PC 에서 맥/리눅스 바이너리를 직접 만들 수 없기 때문에 이 방식을 씁니다)
+
 ---
 
 ## 1. 설치 & 실행
